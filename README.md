@@ -26,3 +26,11 @@ On OS X:
 * Run <tt>brew install imagemagick</tt> to install ImageMagick
 
 Once these are installed, select  the appropriate flavor/build variant in Android Studio. To build in Android Studio, open the project <tt>android/RobboJunior</tt>.
+
+## Лицензия
+
+Этот проект основан на ScratchJr от MIT Media Lab, Tufts University и Playful Invention Company.
+
+Лицензия: BSD 3-Clause
+
+См. файл [LICENSE](LICENSE) для деталей.
