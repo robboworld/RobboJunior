@@ -14,10 +14,10 @@ To sucessfully finish the building process you should have node and npm [install
 
 On first start our script also tries to execute the RobboJunior npm package installation process  by running <tt>npm install</tt> command.
 
-## Лицензия
+## License
 
-Этот проект основан на ScratchJr от MIT Media Lab, Tufts University и Playful Invention Company.
+This project is based on ScratchJr from MIT Media Lab, Tufts University, and Playful Invention Company.
 
-Лицензия: BSD 3-Clause
+License: BSD 3-Clause
 
-См. файл [LICENSE](LICENSE) для деталей.
+See the [LICENSE](LICENSE) file for details.
