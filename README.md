@@ -13,3 +13,11 @@ To build RobboJunior you need to download or clone this repository and then run 
 To sucessfully finish the building process you should have node and npm [installed]. Our script automatically tries to install node and npm, but you can do it manually by follow these (https://nodejs.org/en/download/package-manager/) instructions. 
 
 On first start our script also tries to execute the RobboJunior npm package installation process  by running <tt>npm install</tt> command.
+
+## Лицензия
+
+Этот проект основан на ScratchJr от MIT Media Lab, Tufts University и Playful Invention Company.
+
+Лицензия: BSD 3-Clause
+
+См. файл [LICENSE](LICENSE) для деталей.
