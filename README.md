@@ -27,10 +27,10 @@ On OS X:
 
 Once these are installed, select  the appropriate flavor/build variant in Android Studio. To build in Android Studio, open the project <tt>android/RobboJunior</tt>.
 
-## Лицензия
+## License
 
-Этот проект основан на ScratchJr от MIT Media Lab, Tufts University и Playful Invention Company.
+This project is based on ScratchJr from MIT Media Lab, Tufts University, and Playful Invention Company.
 
-Лицензия: BSD 3-Clause
+License: BSD 3-Clause
 
-См. файл [LICENSE](LICENSE) для деталей.
+See the [LICENSE](LICENSE) file for details.
