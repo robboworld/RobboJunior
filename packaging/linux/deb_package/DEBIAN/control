@@ -1,0 +1,17 @@
+Package: robboJunior
+Version: 1.0.0~alpha
+Section: education
+Priority: optional
+Architecture: amd64
+Depends: libnss3 (>= 3.26), libatk1.0-0 (>= 2.14), libatk-bridge2.0-0 (>= 2.14), libcups2 (>= 2.0), libdrm2 (>= 2.4.38), libxkbcommon0 (>= 0.5.0), libxcomposite1 (>= 1:0.4), libxdamage1 (>= 1:1.1), libxfixes3 (>= 1:5.0), libxrandr2 (>= 2:1.5.0), libgbm1 (>= 10.0), libasound2 (>= 1.0.16), libpango-1.0-0 (>= 1.40.5), libcairo2 (>= 1.14.0), libatspi2.0-0 (>= 2.9.90), libgtk-3-0 (>= 3.20), libxtst6, libxi6, libxrender1, fontconfig
+Recommends: zenity, avrdude, xdg-user-dirs
+Replaces: robbojunior
+Conflicts: robbojunior
+Maintainer: Robbo Team <support@robboclub.ru>
+Homepage: https://robboclub.ru
+Description: Robbo Junior - visual programming for young children
+ Robbo Junior is a block-based programming environment for children
+ aged 5-8, based on ScratchJr, with support for Robbo robots.
+ .
+ Роббо Джуниор — среда визуального программирования для детей 5–8 лет
+ на основе ScratchJr с поддержкой роботов Роббо.

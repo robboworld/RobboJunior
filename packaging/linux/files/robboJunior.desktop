@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Robbo Junior
+Name[ru_RU]=Роббо Джуниор
+Comment=Visual programming for young children with Robbo robots
+Comment[ru_RU]=Визуальное программирование для младших школьников и роботы Роббо
+Exec=robboJunior
+Icon=robboJunior
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Education;Development;
+Keywords=programming;scratchjr;education;robbo;blocks;robot;

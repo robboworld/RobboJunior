@@ -1,0 +1,7 @@
+# Robbo Junior: не отдавать brltty USB-UART CH340 (1a86:7523).
+# 85-brltty.rules считает CH340 брайлевским дисплеем Baum и запускает brltty-udev.service;
+# brltty забирает USB-интерфейс, и ch341 отключает /dev/ttyUSB* через миллисекунды после
+# подключения — Отто, Arduino и другие платы на CH340 пропадают из Robbo Junior.
+# Правило срабатывает после 85-brltty.rules и снимает запуск brltty только для этого чипа;
+# остальные брайлевские дисплеи brltty обслуживает как обычно.
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{PRODUCT}=="1a86/7523/*", ENV{SYSTEMD_WANTS}=""
