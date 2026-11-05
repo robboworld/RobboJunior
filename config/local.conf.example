@@ -1,0 +1,11 @@
+# Локальные настройки сборки Robbo Junior. Скопируйте в config/local.conf (он не попадает в git).
+# Переменные окружения важнее этого файла.
+
+# Где хранить runtime (Electron, Java 8). По умолчанию — runtime/ в корне репозитория.
+#RJ_RUNTIME_DIR=/home/user/robbojunior-runtime
+
+# Сжатие установщика Windows в release.sh: lzma (меньше, медленнее) или zlib
+#WIN_COMPRESSOR=lzma
+
+# Сжатие deb: 1 (быстро) … 9
+#DPKG_DEB_COMPRESS_LEVEL=1
