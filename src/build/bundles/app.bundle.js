@@ -1,3 +1,6 @@
+const node_process = require("process");
+const node_os = require("os");
+const node_fs = require("fs");
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -64,15 +67,15 @@
 	
 	var _MediaLib2 = _interopRequireDefault(_MediaLib);
 	
-	var _index = __webpack_require__(127);
+	var _index = __webpack_require__(126);
 	
-	var _home = __webpack_require__(128);
+	var _home = __webpack_require__(127);
 	
-	var _editor = __webpack_require__(129);
+	var _editor = __webpack_require__(128);
 	
-	var _gettingstarted = __webpack_require__(130);
+	var _gettingstarted = __webpack_require__(129);
 	
-	var _inapp = __webpack_require__(131);
+	var _inapp = __webpack_require__(130);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -1000,6 +1003,7 @@
 	    window.Intl = _intl2.default;
 	}
 	
+	__webpack_require__(99);
 	__webpack_require__(100);
 	__webpack_require__(101);
 	__webpack_require__(102);
@@ -1007,9 +1011,9 @@
 	__webpack_require__(104);
 	__webpack_require__(105);
 	__webpack_require__(106);
-	__webpack_require__(107);
 	
-	__webpack_require__(108);
+	__webpack_require__(107);
+	__webpack_require__(118);
 	__webpack_require__(119);
 	__webpack_require__(120);
 	__webpack_require__(121);
@@ -1017,7 +1021,6 @@
 	__webpack_require__(123);
 	__webpack_require__(124);
 	__webpack_require__(125);
-	__webpack_require__(126);
 	
 	var currentLocale = void 0;
 	var localizationMessages = {};
@@ -5774,16 +5777,15 @@
 	                //modified_by_Yaroslav
 	                fcn(_MediaLib2.default.path + md5);return;
 	            } // just url link assets do not have photos
-	            if (md5.indexOf('/') > -1) {
+	            if (md5.indexOf('/') > -1 && md5.indexOf('_custom') < 0) {
 	                IO.requestFromServer(md5, gotit); // get url contents
 	                return;
 	            }
-	            if (IO.getExtension(md5) == 'png' && _iOS2.default.path) {
-	                fcn(_iOS2.default.path + md5); // only if it is not in debug mode
+	            if (IO.getExtension(md5) == 'png' && _iOS2.default.path !== _iOS2.default.storagePath) {
+	                // fcn(iOS.path + md5); // only if it is not in debug mode
+	                fcn(md5);
 	            } else {
-	
 	                if (md5.indexOf('_custom') != -1) {
-	
 	                    md5 = md5.replace("_custom", "");
 	                }
 	                _iOS2.default.getmedia(md5, nextStep);
@@ -5803,9 +5805,21 @@
 	            function nextStep(dataurl) {
 	                // iOS 7 requires to read the internal base64 images before returning contents
 	                var str = atob(dataurl);
-	                if (str.indexOf('xlink:href') < 0 && _iOS2.default.path) {
-	                    fcn(_iOS2.default.path + md5); // does not have embedded images
+	                if (str.indexOf('xlink:href') < 0 && /*&& (md5.indexOf(iOS.storagePath) < 0)*/_iOS2.default.path !== _iOS2.default.storagePath) {
+	                    //fcn(iOS.path + md5); // does not have embedded images
+	                    fcn(md5);
 	                } else {
+	
+	                    try {
+	
+	                        //dataurl = btoa(dataurl);
+	
+	                        console.warn('data url for md5: ' + md5);
+	                        console.warn(dataurl);
+	                    } catch (error) {
+	                        console.error("nextStep base64 decode error: " + error);
+	                    }
+	
 	                    var base64 = IO.getImageDataURL(md5, dataurl);
 	                    IO.getImagesInSVG(str, function () {
 	                        fcn(base64);
@@ -5837,6 +5851,7 @@
 	                } else for (var i = 0; i < images.length; i++) {
 	                    var dataurl = images[i].getAttribute('xlink:href');
 	                    var svgimg = document.createElement('img');
+	                    console.log("In iPad/IO.js in getImagesInSVG i = " + i + "; and dataurl = " + dataurl);
 	                    svgimg.src = dataurl;
 	                    if (!svgimg.complete) {
 	                        svgimg.onload = function () {
@@ -6116,7 +6131,9 @@
 	                // Generic function for adding media to the zip file
 	                var addMediaToZip = function addMediaToZip(folder, md5) {
 	                    var addB64ToZip = function addB64ToZip(b64data) {
-	                        zipFile.file('project/' + folder + '/' + md5, b64data, {
+	                        //  zipFile.file('project/' + folder + '/' + md5, b64data, {
+	                        zipFile.file('project/' + folder + md5, b64data, {
+	
 	                            base64: true,
 	                            createFolders: true
 	                        });
@@ -6273,6 +6290,9 @@
 	                'base64': true
 	            });
 	
+	            //receivedZip.loadAsync(b64data,/*{'base64': true }*/).then(zip =>{
+	
+	
 	            // To store character MD5 -> character name map
 	            // The character name is stored in the project JSON; when we load
 	            // the actual SVG asset, we need the associated name for storage in the DB
@@ -6411,6 +6431,16 @@
 	
 	                // File data and base64-encoded data
 	                var data = file.asBinary();
+	
+	                try {
+	
+	                    data = atob(data);
+	                    console.warn("Succesfull decode");
+	                } catch (error) {
+	
+	                    console.error("Decode error:" + error);
+	                }
+	
 	                var b2data = btoa(data);
 	
 	                if (subFolder == 'thumbnails' || subFolder == 'sounds') {
@@ -6530,6 +6560,11 @@
 	                }
 	            }
 	            refreshLobby();
+	
+	            //   }).catch(err => {
+	
+	            //         console.error(err);
+	            //   });
 	        }
 	    }, {
 	        key: 'zipFileName',
@@ -6584,9 +6619,15 @@
 	
 	var _Localization2 = _interopRequireDefault(_Localization);
 	
+	var _ScratchJr = __webpack_require__(15);
+	
+	var _ScratchJr2 = _interopRequireDefault(_ScratchJr);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	//need to get current project name
 	
 	//////////////////////////////////////////////////
 	//  Tablet interface functions
@@ -6601,6 +6642,15 @@
 	var database = 'projects';
 	var mediacounter = 0;
 	var tabletInterface = null;
+	
+	var homedir = node_os.homedir();
+	homedir = homedir.replace(/\\/g, '/');
+	var path_postfix = node_process.platform === "win32" ? "/AppData/Local/RobboJuniorProjects/" : "/.config/RobboJuniorProjects/";
+	var storagePath = homedir + (node_process.platform === "win32" ? "/AppData/Local/RobboJuniorProjects/" : "/.config/RobboJuniorProjects/");
+	
+	console.log("homedir = " + homedir);
+	console.log("path_postfix = " + path_postfix);
+	console.log("node_process.platform = " + node_process.platform);
 	
 	var iOS = function () {
 	   function iOS() {
@@ -6629,6 +6679,19 @@
 	
 	      // Wait for the tablet interface to be injected into the webview
 	      value: function waitForInterface(fcn) {
+	         console.log("waitFotInterface");
+	         console.log("storagePath = " + storagePath);
+	
+	         //Check if ~/.config and ~/.config/RobboJuniorProjects dirs exists
+	         //Or ~\AppData\Local\RobboJuniorProjects exists
+	
+	         if (!node_fs.existsSync(storagePath)) {
+	            node_fs.mkdirSync(storagePath);
+	            console.log("Dir " + storagePath + " created");
+	         } else {
+	            console.log("Dir " + storagePath + " exists");
+	         }
+	
 	         //AZ
 	         String.prototype.replaceAll = function (search, replacement) {
 	            var target = this;
@@ -6696,6 +6759,7 @@
 	            tabletInterface.hideSplash = function () {};
 	
 	            tabletInterface.io_getsettings = function () {
+	               console.log("io_getsettings");
 	               return "";
 	            };
 	
@@ -6705,7 +6769,6 @@
 	               //AZ
 	
 	               var infinity_case = function infinity_case(audio, fcn) {
-	
 	                  console.log("Record duration infinity case!!!");
 	
 	                  // set it to bigger than the actual duration
@@ -6716,23 +6779,17 @@
 	                     };
 	
 	                     if (audio.duration === Infinity) {
-	
 	                        //  setTimeout(infinity_case(audio,fcn),2000);
-	
 	                        infinity_case(audio, fcn);
 	                     } else {
-	
 	                        console.log("Playing " + audio.src + ", for: " + audio.duration + " seconds.");
 	
 	                        if (fcn) {
-	
 	                           var dur = Math.round(audio.duration * 1000) + 500;
 	                           setTimeout(fcn, dur);
 	                        }
-	
 	                        audio.currentTime = 0;
 	                     }
-	
 	                     audio.play();
 	                  };
 	               };
@@ -6750,24 +6807,17 @@
 	                        //infinity_case(audio,fcn)
 	
 	                        console.log("Playing " + audio.src + ", for: " + duration + " milliseconds.");
-	
 	                        if (fcn) {
-	
 	                           var dur = duration + 500;
 	                           setTimeout(fcn, dur);
 	                        }
-	
 	                        audio.play();
 	                     } else {
-	
 	                        console.log("Playing " + audio.src + ", for: " + audio.duration + " seconds.");
-	
 	                        if (fcn) {
-	
 	                           var _dur = Math.round(audio.duration * 1000) + 500;
 	                           setTimeout(fcn, _dur);
 	                        }
-	
 	                        audio.play();
 	                     }
 	                  });
@@ -6794,6 +6844,7 @@
 	                  player('sounds/' + soundFileName);
 	               }
 	            };
+	
 	            tabletInterface.io_stopsound = function (soundFileName, fcn) {
 	               console.log("stop sound=" + soundFileName);
 	
@@ -6827,16 +6878,12 @@
 	               });
 	
 	               tx.executeSql('SELECT sql FROM sqlite_master WHERE type = "table" AND name = "usershapes"', [], function (tx, results) {
-	
 	                  if (results.rows[0].sql.indexOf("need_flip") == -1) {
-	
 	                     tx.executeSql('ALTER TABLE "usershapes" ADD COLUMN "need_flip" TEXT', [], function (tx, results) {}, function (tx, error) {
-	
 	                        console.log("ALTER TABLE 'usershapes' error: " + error.message);
 	                     });
 	                  }
 	               }, function (tx, error) {
-	
 	                  console.log("PRAGMA table_info error: " + error.message);
 	               });
 	            };
@@ -7012,106 +7059,140 @@
 	               tabletInterface.io_setmedianame(data, tabletInterface.io_getmd5(data), ext, callback);
 	            };
 	
+	            // tabletInterface.io_setmedianame  = function(data, name, extension, callback){
+	            //    console.log("io_setmedianame =" + name + " extension=" + extension + " data length=" + data.length);
+	
+	
+	            //    function errorHandler(e){
+	            //       //alert("file error" + e);
+	            //       console.error("file error" + e);
+	            //    };
+	
+	
+	            //    function onInitFs(fs) {
+	            //       console.log('Opened file system: ' + fs.name);
+	
+	            //       fs.root.getFile(name + "." + extension, {create: true}, function(fileEntry) {
+	
+	            //          fileEntry.createWriter(function(fileWriter) {
+	            //             fileWriter.onwriteend = function(e) {
+	            //                console.log('Write completed.');
+	            //                if((callback) && ((data instanceof Blob))){
+	            //                   console.log('Data is  a blob. Sound save  callback case.');
+	            //                   callback();
+	            //                }
+	            //                if((callback) && (!(data instanceof Blob))){
+	            //                   console.log('Data is not a blob. Standart callback case.');
+	            //                   callback(name + "." + extension);
+	            //                }
+	            //             }
+	
+	            //             fileWriter.onerror = function(e) {
+	            //                console.log('Write failed: ' + e.toString());
+	            //             };
+	
+	            //             if (!(data instanceof Blob)){
+	            //                var bb = new Blob([data]); // Note: window.WebKitBlobBuilder in Chrome 12.
+	            //                fileWriter.write(bb);
+	            //             }else{
+	            //                fileWriter.write(data);
+	            //             }
+	            //          });
+	            //       }, errorHandler);
+	            //    };
+	
+	
+	            //    tabletInterface.requestQuota(onInitFs, errorHandler);
+	            // }
+	
 	            tabletInterface.io_setmedianame = function (data, name, extension, callback) {
+	               if (typeof data == "undefined") {
+	                  console.log("Data in io_setmedianame is undefined!!!");
+	                  return;
+	               }
 	               console.log("io_setmedianame =" + name + " extension=" + extension + " data length=" + data.length);
 	
-	               function errorHandler(e) {
-	                  //alert("file error" + e);
-	                  console.error("file error" + e);
-	               };
+	               name = storagePath + name;
 	
-	               function onInitFs(fs) {
-	                  console.log('Opened file system: ' + fs.name);
+	               console.log("Current project is " + _ScratchJr2.default.currentProject);
 	
-	                  fs.root.getFile(name + "." + extension, { create: true }, function (fileEntry) {
-	
-	                     fileEntry.createWriter(function (fileWriter) {
-	
-	                        fileWriter.onwriteend = function (e) {
-	
-	                           console.log('Write completed.');
-	
-	                           if (callback && data instanceof Blob) {
-	                              console.log('Data is  a blob. Sound save  callback case.');
-	                              callback();
-	                           }
-	
-	                           if (callback && !(data instanceof Blob)) {
-	
-	                              console.log('Data is not a blob. Standart callback case.');
-	                              callback(name + "." + extension);
-	                           }
-	                        };
-	
-	                        fileWriter.onerror = function (e) {
-	                           console.log('Write failed: ' + e.toString());
-	                        };
-	
-	                        if (!(data instanceof Blob)) {
-	
-	                           var bb = new Blob([data]); // Note: window.WebKitBlobBuilder in Chrome 12.
-	                           fileWriter.write(bb);
-	                        } else {
-	
-	                           fileWriter.write(data);
-	                        }
-	                     });
-	                  }, errorHandler);
-	               };
-	
-	               //    window.webkitStorageInfo.queryUsageAndQuota(
-	               //         webkitStorageInfo.PERSISTENT,
-	               //         usageCallback,
-	               //         errorCallback);
-	
-	               //window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
-	               //window.requestFileSystem(window.TEMPORARY, 5*1024*1024 /*5MB*/, onInitFs, errorHandler);
-	
-	               //  navigator.webkitPersistentStorage.requestQuota(2 *1024*1024*1024, //2Гб
-	               //     function(grantedBytes){
-	               //        console.log("byte granted=" + grantedBytes);
-	               //        window.webkitRequestFileSystem(PERSISTENT, grantedBytes, onInitFs, errorHandler);
-	               //     }, errorHandler
-	               //  );
-	
-	               tabletInterface.requestQuota(onInitFs, errorHandler);
-	
-	               //  if((callback) && (!(data instanceof Blob))){
-	
-	               //      console.log('Data is not a blob. Standart callback case.');
-	               //     callback(name + "." + extension);
-	               //  }
+	               if (data instanceof Blob || data.constructor.name == "Blob") {
+	                  //console.log("io_setmedianame log: (data instanceof Blob) == true");
+	                  var reader = new FileReader();
+	                  reader.onload = function () {
+	                     data = reader.result;
+	                     //console.log("Before:" + data);
+	                     data = data.slice(data.indexOf("base64,") + 7);
+	                     //console.log("After:" + data);
+	                     tabletInterface.hidden_func_write_file(name, extension, data, callback, true);
+	                  };
+	                  reader.readAsDataURL(data);
+	               } else {
+	                  console.log("In iPad/iOS.js in io_setmedianame data.length = " + data.length);
+	                  //data = data.toString();
+	                  tabletInterface.hidden_func_write_file(name, extension, data, callback, false);
+	               }
 	            };
 	
-	            tabletInterface.requestQuota = function (initFsCb, errorHandler) {
-	
-	               var errorCallback = function errorCallback(error) {
-	
-	                  console.error("tabletInterface.requestQuota " + error);
-	               };
-	
-	               var usageCallback = function usageCallback(bytesInUse, grantedBytes) {
-	                  navigator.webkitPersistentStorage.requestQuota(grantedBytes, function (grantedBytes) {
-	                     console.log("byte granted=" + grantedBytes);
-	                     window.webkitRequestFileSystem(PERSISTENT, grantedBytes, initFsCb, errorHandler);
-	                  }, errorHandler);
-	               };
-	
-	               window.webkitStorageInfo.queryUsageAndQuota(webkitStorageInfo.PERSISTENT, usageCallback, errorCallback);
+	            var usageCallback = function usageCallback(bytesInUse, grantedBytes) {
+	               navigator.webkitPersistentStorage.requestQuota(grantedBytes, function (grantedBytes) {
+	                  console.log("byte granted=" + grantedBytes);
+	                  window.webkitRequestFileSystem(PERSISTENT, grantedBytes, initFsCb, errorHandler);
+	               }, errorHandler);
 	            };
+	            tabletInterface.hidden_func_write_file = function (name, extension, data, callback, isSound) {
+	               console.log("isSound = " + isSound + "; data.length = " + data.length);
+	               node_fs.writeFile(name + "." + extension, data, "utf-8", function (err) {
+	                  // console.log(data);
+	                  if (err) console.error("Error in fs.writeFile: " + err);else {
+	                     console.log('Write completed.');
+	                     if (callback && isSound) {
+	                        console.log('Data is  a blob. Sound save  callback case.');
+	                        callback();
+	                     }
+	                     if (callback && !isSound) {
+	                        console.log('Data is not a blob. Standart callback case.');
+	                        callback(name + "." + extension);
+	                     }
+	                  }
+	               });
+	            };
+	
+	            // tabletInterface.requestQuota = function(initFsCb,errorHandler){
+	
+	            //    let errorCallback = function(error){
+	            //       console.error("tabletInterface.requestQuota " + error);
+	            //    }
+	
+	            //    let usageCallback = function(bytesInUse,grantedBytes){
+	            //       navigator.webkitPersistentStorage.requestQuota(grantedBytes, 
+	            //          function(grantedBytes){
+	            //             console.log("byte granted=" + grantedBytes);
+	            //             window.webkitRequestFileSystem(PERSISTENT, grantedBytes, initFsCb, errorHandler);
+	            //          }, errorHandler
+	            //       );
+	            //    }
+	
+	
+	            //    window.webkitStorageInfo.queryUsageAndQuota(
+	            //       webkitStorageInfo.PERSISTENT,
+	            //       usageCallback,
+	            //       errorCallback,
+	            //    );
+	            // }
+	
 	
 	            tabletInterface.io_remove = function (name, cb) {
-	               console.log("io_remove =" + name);
+	               console.log("io_remove = " + name);
 	
+	               console.log("ScratchJr.currentProject = " + _ScratchJr2.default.currentProject);
 	               var error_object = { err_msg: "", err_code: 0 };
-	
 	               var result_object = { error: error_object };
 	
 	               var errorHandler = function errorHandler(e) {
 	                  console.error("File error during removing: " + e);
 	
 	                  if (cb) {
-	
 	                     error_object.err_msg = "File error during removing: " + e;
 	                     error_object.err_code = 1;
 	
@@ -7121,42 +7202,25 @@
 	                  }
 	               };
 	
-	               var _onInitFs = function _onInitFs(fs) {
-	
-	                  fs.root.getFile(name, { create: false }, function (fileEntry) {
-	
-	                     fileEntry.remove(function () {
-	
-	                        console.log('File ' + name + ' was removed.');
-	
-	                        if (cb) {
-	
-	                           error_object.err_msg = "";
-	                           error_object.err_code = 0;
-	
-	                           result_object.error = error_object;
-	
-	                           cb(result_object);
-	                        }
-	                     }, errorHandler);
-	                  }, errorHandler);
-	               };
-	
 	               //  navigator.webkitPersistentStorage.requestQuota(2 *1024*1024*1024, //2Гб
 	               //     function(grantedBytes){
 	               //  //      console.log("byte granted=" + grantedBytes);
 	               //        window.webkitRequestFileSystem(PERSISTENT, grantedBytes, _onInitFs, errorHandler);
 	               //     }, errorHandler);
 	
-	               tabletInterface.requestQuota(_onInitFs, errorHandler);
+	               // name = storagePath + name;
+	
+	               node_fs.unlink(name, function (err) {
+	                  //unlink = delete file
+	                  if (err) errorHandler(err);else console.log("File " + name + " was successfully removed!");
+	               });
 	            };
 	
 	            /*
-	                   tabletInterface.io_getmedialen  = function(name, callback){
-	                      console.log("io_getmedialen =" + name);
-	            
+	                  tabletInterface.io_getmedialen  = function(name, callback){
+	                     console.log("io_getmedialen =" + name);
 	                      return 0;
-	                   }
+	                  }
 	            */
 	
 	            tabletInterface.io_getmediadone = function (name) {
@@ -7167,12 +7231,10 @@
 	               console.log("io_getStorageFreeSpace");
 	
 	               var errorCallback = function errorCallback(error) {
-	
 	                  console.error(error);
 	               };
 	
 	               var usageCallback = function usageCallback(bytesInUse, grantedBytes) {
-	
 	                  var result = {
 	                     bytesInUse: bytesInUse,
 	                     grantedBytes: grantedBytes
@@ -7186,114 +7248,197 @@
 	               window.webkitStorageInfo.queryUsageAndQuota(webkitStorageInfo.PERSISTENT, usageCallback, errorCallback);
 	            };
 	
+	            // tabletInterface.io_getStorageSpaceInfo = function(callback){
+	            //    console.log("io_getStorageFreeSpace");
+	
+	
+	            //    disk.check(process.platform === 'win32' ? 'c:' : '/', (err, info) => { //disk = require('diskusage');
+	            //       if(callback){
+	            //          callback({
+	            //             bytesInUse: info.
+	            //             grantedBytes: info.available,
+	            //          });
+	            //       }
+	            //    });
+	            // }
+	
+	            // tabletInterface.io_loadFileAPI = function(sFile, callback){
+	            //    console.log("io_loadFileAPI =" + sFile);
+	
+	            //    function errorHandler(e){
+	            //       alert("file error" + e);
+	            //    };
+	
+	
+	            //    function onInitFs(fs) {
+	            //       console.log('Opened file system: ' + fs.name);
+	
+	            //       //true
+	            //       fs.root.getFile(sFile, {create: false}, function(fileEntry) {
+	            //          fileEntry.file(function(file) {
+	            //             var reader = new FileReader();
+	
+	            //             reader.onloadend = function(e) {
+	            //                console.log("Read completed for " + sFile + " length=" + this.result.length);
+	            //                callback(this.result);
+	            //             };
+	
+	            //             reader.readAsText(file);
+	            //          });
+	
+	            //       }, errorHandler);
+	            //    };
+	
+	            //    //  navigator.webkitPersistentStorage.requestQuota(2 *1024*1024*1024, //2Гб
+	            //    //     function(grantedBytes){
+	            //    //        console.log("byte granted=" + grantedBytes);
+	            //    //        window.webkitRequestFileSystem(PERSISTENT, grantedBytes, onInitFs, errorHandler);
+	            //    //     }, errorHandler
+	            //    //  );
+	
+	            //    tabletInterface.requestQuota(onInitFs, errorHandler);
+	
+	            // }
+	
 	            tabletInterface.io_loadFileAPI = function (sFile, callback) {
-	               console.log("io_loadFileAPI =" + sFile);
+	               // sFile = storagePath + sFile;
+	               console.log("io_loadFileAPINew sFile=" + sFile);
 	
-	               function errorHandler(e) {
-	                  alert("file error" + e);
-	               };
-	
-	               function onInitFs(fs) {
-	                  console.log('Opened file system: ' + fs.name);
-	
-	                  //true
-	                  fs.root.getFile(sFile, { create: false }, function (fileEntry) {
-	                     fileEntry.file(function (file) {
-	                        var reader = new FileReader();
-	
-	                        reader.onloadend = function (e) {
-	                           console.log("Read completed for " + sFile + " length=" + this.result.length);
-	                           callback(this.result);
-	                        };
-	
-	                        reader.readAsText(file);
-	                     });
-	                  }, errorHandler);
-	               };
-	
-	               //  navigator.webkitPersistentStorage.requestQuota(2 *1024*1024*1024, //2Гб
-	               //     function(grantedBytes){
-	               //        console.log("byte granted=" + grantedBytes);
-	               //        window.webkitRequestFileSystem(PERSISTENT, grantedBytes, onInitFs, errorHandler);
-	               //     }, errorHandler
-	               //  );
-	
-	               tabletInterface.requestQuota(onInitFs, errorHandler);
+	               node_fs.readFile(sFile, function (err, data) {
+	                  if (err) {
+	                     console.error("io_loadFileAPINew error: " + err);
+	                  } else {
+	                     console.log(data.length);
+	                     callback(data);
+	                  }
+	               });
 	            };
 	
 	            tabletInterface.io_loadFileAPIBinaryURL = function (sFile, callback) {
-	               console.log("io_loadFileAPI =" + sFile);
+	               console.log("io_loadFileAPIBinaryURL =" + sFile);
 	
-	               function errorHandler(e) {
-	                  alert("file error" + e);
-	               };
+	               var dataType = {};
 	
-	               function onInitFs(fs) {
-	                  console.log('Opened file system: ' + fs.name);
+	               var ext = sFile.slice(sFile.length - 3);
 	
-	                  var create_option = {};
+	               console.log("EXT IS " + ext);
+	               //console.log(typeof ext);
 	
-	                  if (sFile.startsWith("SND_")) {
+	               if (ext === "png") {
+	                  dataType.type = "image";
+	                  dataType.ext = "png";
+	               } else if (ext === "svg") {
+	                  dataType.type = "image";
+	                  dataType.ext = "svg+xml";
+	               } else if (ext === "wav") {
+	                  dataType.type = "video";
+	                  dataType.ext = "webm";
+	               } else {
+	                  dataType.type = "unknown";
+	                  dataType.ext = "unknown";
+	               }
 	
-	                     create_option.create = false;
-	                  } else {
+	               sFile = storagePath + sFile;
 	
-	                     create_option.create = true;
-	                     //{create: true}
-	                  }
+	               node_fs.readFile(sFile, function (err, data) {
+	                  if (err) console.error(err);else {
+	                     console.log("iOS:io_loadFileAPIBina...:Trying to read file " + sFile);
+	                     var resp = 'data:' + dataType.type + '/' + dataType.ext + ';base64,' + data;
 	
-	                  var listResults = function listResults(entries) {
+	                     if (data.constructor.name == "Buffer") {
+	                        console.log('loadFileAPIBinaryURL data is Buffer, type is  ' + data.type + ' and size is  ' + data.size);
+	                        // console.log(data.toString());
 	
-	                     entries.forEach(function (entry, i) {
+	                        if (dataType.ext === "svg") {
 	
-	                        console.log("Directory entry: " + entry + "name: " + entry.name + " " + "full_path: " + entry.fullPath);
-	                     });
-	                  };
+	                           try {
 	
-	                  var dirReader = fs.root.createReader();
-	                  var entries = [];
+	                              data = btoa(data);
 	
-	                  var readEntries = function readEntries() {
+	                              console.warn('data  for md5: ' + sFile);
+	                              console.warn(data);
 	
-	                     function toArray(list) {
-	                        return Array.prototype.slice.call(list || [], 0);
-	                     }
-	
-	                     dirReader.readEntries(function (results) {
-	                        if (!results.length) {
-	                           listResults(entries.sort());
-	                        } else {
-	                           entries = entries.concat(toArray(results));
-	                           readEntries();
+	                              resp = 'data:' + dataType.type + '/' + dataType.ext + ';base64,' + data;
+	                           } catch (error) {
+	                              console.error("iOS:io_loadFileAPIBina base64 decode error: " + error);
+	                           }
 	                        }
-	                     }, errorHandler);
-	                  };
-	
-	                  readEntries();
-	
-	                  fs.root.getFile(sFile, create_option, function (fileEntry) {
-	                     fileEntry.file(function (file) {
-	                        var reader = new FileReader();
-	
-	                        reader.onloadend = function (e) {
-	                           console.log("Read completed for " + sFile + ". length=" + this.result.length);
-	                           callback(this.result);
-	                        };
-	
-	                        reader.readAsDataURL(file);
-	                     });
-	                  }, errorHandler);
-	               };
-	
-	               //  navigator.webkitPersistentStorage.requestQuota(2 *1024*1024*1024, //2Гб
-	               //     function(grantedBytes){
-	               //        console.log("byte granted=" + grantedBytes);
-	               //        window.webkitRequestFileSystem(PERSISTENT, grantedBytes, onInitFs, errorHandler);
-	               //     }, errorHandler
-	               //  );
-	
-	               tabletInterface.requestQuota(onInitFs, errorHandler);
+	                     }
+	                     console.warn("loadFileAPIBinaryURL.resp = " + resp);
+	                     callback(resp);
+	                  }
+	               });
 	            };
+	
+	            // tabletInterface.io_loadFileAPIBinaryURL = function(sFile, callback){
+	            //    console.log("io_loadFileAPIBinaryURL =" + sFile);
+	
+	            //    function errorHandler(e){
+	            //       alert("file error" + e);
+	            //    };
+	
+	
+	            //    function onInitFs(fs) {
+	            //       console.log('Opened file system: ' + fs.name);
+	
+	            //       let create_option = {};
+	
+	            //       if (sFile.startsWith("SND_")){
+	            //          create_option.create = false;
+	            //       }else{
+	            //          create_option.create = true;
+	            //          //{create: true}
+	            //       }
+	
+	            // var listResults = function(entries){
+	            //    entries.forEach(function(entry, i) {
+	            //       console.log("Directory entry: " + entry + "name: " + entry.name + " " + "full_path: " + entry.fullPath);
+	            //    });
+	            // }
+	            // var dirReader = fs.root.createReader();
+	            // var entries = [];
+	            // var readEntries = function() {
+	            //    function toArray(list) {
+	            //       return Array.prototype.slice.call(list || [], 0);
+	            //    }
+	            //    dirReader.readEntries (function(results) {
+	            //       if (!results.length) {
+	            //          listResults(entries.sort());
+	            //       } else {
+	            //          entries = entries.concat(toArray(results));
+	            //          readEntries();
+	            //       }
+	            //    }, errorHandler);
+	            // };
+	            // readEntries();
+	
+	
+	            //    fs.root.getFile(sFile, create_option, function(fileEntry) {
+	            //       fileEntry.file(function(file) {
+	            //          var reader = new FileReader();
+	
+	            //          reader.onloadend = function(e) {
+	            //             console.log("Read completed for " + sFile + ". length=" + this.result.length);
+	            //             console.log("Result is " + this.result);
+	            //             callback(this.result);
+	            //          };
+	
+	            //          reader.readAsDataURL(file);
+	            //       });
+	
+	            //    }, errorHandler);
+	            // };
+	
+	            //  navigator.webkitPersistentStorage.requestQuota(2 *1024*1024*1024, //2Гб
+	            //     function(grantedBytes){
+	            //        console.log("byte granted=" + grantedBytes);
+	            //        window.webkitRequestFileSystem(PERSISTENT, grantedBytes, onInitFs, errorHandler);
+	            //     }, errorHandler
+	            //  );
+	
+	            //    tabletInterface.requestQuota(onInitFs, errorHandler);
+	            // }
+	
 	
 	            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 	
@@ -7335,6 +7480,7 @@
 	                  alert(_Localization2.default.localize('NAVIGATOR_USER_MEDIA_ERROR'));
 	               });
 	            };
+	
 	            tabletInterface.recordsound_volume = function (fcn) {
 	               if (tabletInterface.audioContext.state === 'suspended') {
 	                  tabletInterface.audioContext.resume();
@@ -7352,6 +7498,7 @@
 	                  fcn(0.01 * values / length);
 	               }
 	            };
+	
 	            tabletInterface.recordsound_recordstop = function () {
 	               console.log("recordsound_recordstop");
 	
@@ -7359,16 +7506,16 @@
 	               tabletInterface.record.record_stop_time = Date.now();
 	               console.log("record stoped at: " + tabletInterface.record.record_stop_time + " ms");
 	            };
+	
 	            tabletInterface.recordsound_startplay = function () {
 	               console.log("recordsound_startplay");
 	               var audio = new Audio(tabletInterface.audioURL);
 	               audio.play();
 	            };
+	
 	            tabletInterface.recordsound_recordclose = function () {
 	               console.log("recordsound_recordclose");
-	
 	               if (tabletInterface.record.record_stop_time < 0 || tabletInterface.record.record_stop_time == null || typeof tabletInterface.record.record_stop_time == 'undefined') {
-	
 	                  tabletInterface.record.record_stop_time = Date.now();
 	                  console.log("record stoped at: " + tabletInterface.record.record_stop_time + " ms");
 	               }
@@ -7379,7 +7526,6 @@
 	               var db = openDatabase('jr', '1.0', 'Scratch Junior', 2 * 1024 * 1024);
 	
 	               db.transaction(function (tx) {
-	
 	                  tx.executeSql("INSERT INTO sound_records (record_name, record_duration) values(?, ?)", [tabletInterface.audioName + ".wav", tabletInterface.record.record_duration], null, null);
 	               });
 	
@@ -7548,7 +7694,6 @@
 	               fcn();
 	            }
 	         } else {
-	
 	            // Already loaded the interface
 	            if (tabletInterface != null) {
 	               fcn();
@@ -7563,7 +7708,6 @@
 	               }
 	               return;
 	            }
-	
 	            // iOS device - might not be loaded yet
 	            if (_typeof(window.tablet) != 'object') {
 	               // Come back in 100ms
@@ -7634,14 +7778,11 @@
 	               tx.executeSql('SELECT sql FROM sqlite_master WHERE type = "table" AND name = "usershapes"', [], function (tx, results) {
 	
 	                  if (results.rows[0].sql.indexOf("need_flip") == -1) {
-	
 	                     tx.executeSql('ALTER TABLE "usershapes" ADD COLUMN "need_flip" TEXT', [], function (tx, results) {}, function (tx, error) {
-	
 	                        console.log("ALTER TABLE 'usershapes' error: " + error.message);
 	                     });
 	                  }
 	               }, function (tx, error) {
-	
 	                  console.log("PRAGMA table_info error: " + error.message);
 	               });
 	            };
@@ -7660,11 +7801,8 @@
 	
 	
 	                  tx.executeSql(objCommand.stmt, objCommand.values, function (tx, results) {
-	
 	                     //   tx.executeSql('SELECT * FROM customsprites', [], function (tx, results) {
-	
 	                     //   console.log("query::database_query")
-	
 	                     var len = results.rows.length,
 	                         i;
 	
@@ -7718,6 +7856,11 @@
 	         json.values = [val, new Date().getTime().toString()];
 	         json.stmt = 'update ' + db + ' set ' + keylist.toString() + ' where id = ' + id;
 	         iOS.stmt(json, fcn);
+	      }
+	   }, {
+	      key: 'loadFileAPIBinaryURL',
+	      value: function loadFileAPIBinaryURL(sFile, callback) {
+	         tabletInterface.io_loadFileAPIBinaryURL(sFile, callback);
 	      }
 	
 	      // IO functions
@@ -7833,16 +7976,12 @@
 	   }, {
 	      key: 'remove',
 	      value: function remove(str, fcn) {
-	
 	         //    var result = null;
 	         //     if (fcn) {
 	         //         fcn(result);
 	         //     }
-	
 	         tabletInterface.io_remove(str, function (result_object) {
-	
 	            if (fcn) {
-	
 	               fcn("iOS remove:" + str + " " + result_object.error.err_msg);
 	            }
 	         });
@@ -7850,7 +7989,6 @@
 	   }, {
 	      key: 'uploaded_asset_remove',
 	      value: function uploaded_asset_remove(str, fcn) {
-	
 	         tabletInterface.io_remove(str, fcn);
 	      }
 	   }, {
@@ -7872,7 +8010,6 @@
 	   }, {
 	      key: 'getStorageSpaceInfo',
 	      value: function getStorageSpaceInfo(fcn) {
-	
 	         tabletInterface.io_getStorageSpaceInfo(fcn);
 	      }
 	
@@ -8059,9 +8196,7 @@
 	   }, {
 	      key: 'save_project_to_sjr',
 	      value: function save_project_to_sjr(fileName, b64data) {
-	
 	         if (_lib.isTablet) {} else {
-	
 	            tabletInterface.io_setmedianame(b64data, fileName, "sjr");
 	         }
 	      }
@@ -8127,6 +8262,11 @@
 	         path = newPath;
 	      }
 	   }, {
+	      key: 'storagePath',
+	      get: function get() {
+	         return storagePath;
+	      }
+	   }, {
 	      key: 'camera',
 	      get: function get() {
 	         return camera;
@@ -8135,6 +8275,11 @@
 	      key: 'database',
 	      get: function get() {
 	         return database;
+	      }
+	   }, {
+	      key: 'getStoragePath',
+	      get: function get() {
+	         return storagePath;
 	      }
 	   }]);
 	
@@ -8183,7 +8328,7 @@
 	
 	var _Home2 = _interopRequireDefault(_Home);
 	
-	var _Samples = __webpack_require__(99);
+	var _Samples = __webpack_require__(98);
 	
 	var _Samples2 = _interopRequireDefault(_Samples);
 	
@@ -8292,15 +8437,14 @@
 	            (0, _lib.gn)('project_load').onmousedown = (0, _lib.gn)('project_load').ontouchstart;
 	
 	            //modified_by_Yaroslav //sprite upload button
-	            //         gn('sprite_upload').ontouchstart = UI.uploadSpriteFromDisk;
-	            // //AZ
-	            //         gn('sprite_upload').onmousedown = gn('sprite_upload').ontouchstart;
-	            //
-	            //         //modified_by_Yaroslav //background upload button
-	            //         gn('bkg_upload').ontouchstart = UI.uploadBackgroundFromDisk;
-	            // //AZ
-	            //         gn('bkg_upload').onmousedown = gn('bkg_upload').ontouchstart;
+	            (0, _lib.gn)('sprite_upload').ontouchstart = _UI2.default.uploadSpriteFromDisk;
+	            //AZ
+	            (0, _lib.gn)('sprite_upload').onmousedown = (0, _lib.gn)('sprite_upload').ontouchstart;
 	
+	            //modified_by_Yaroslav //background upload button
+	            (0, _lib.gn)('bkg_upload').ontouchstart = _UI2.default.uploadBackgroundFromDisk;
+	            //AZ
+	            (0, _lib.gn)('bkg_upload').onmousedown = (0, _lib.gn)('bkg_upload').ontouchstart;
 	
 	            if (_lib.isAndroid) {
 	                AndroidInterface.notifyDoneLoading();
@@ -8530,12 +8674,11 @@
 	            var div = (0, _lib.newHTML)('div', 'htmlcontents home', p);
 	            div.setAttribute('id', 'htmlcontents');
 	
-	            // var arrow_image = newImage_extended(div,'assets/lobby/navigation-arrow.svg',{},'arrow-image'); //modified_by_Yaroslav
-	            //
-	            //  arrow_image.ontouchstart = Lobby.createSpriteBgLoadPage;
-	            //
-	            // arrow_image.onmousedown = arrow_image.ontouchstart;
+	            var arrow_image = (0, _lib.newImage_extended)(div, 'assets/lobby/navigation-arrow.svg', {}, 'arrow-image'); //modified_by_Yaroslav
 	
+	            arrow_image.ontouchstart = Lobby.createSpriteBgLoadPage;
+	
+	            arrow_image.onmousedown = arrow_image.ontouchstart;
 	
 	            _Home2.default.init();
 	        }
@@ -8577,11 +8720,9 @@
 	            var div = (0, _lib.newHTML)('div', 'htmlcontents settings', p);
 	            div.setAttribute('id', 'htmlcontents');
 	
-	            var arrow_image = (0, _lib.newImage_extended)(div, 'assets/lobby/navigation-arrow.svg', {}, 'arrow-image'); //added_by_Yaroslav //custom images loading
-	
-	            arrow_image.ontouchstart = Lobby.createSpriteBgLoadPage;
-	
-	            arrow_image.onmousedown = arrow_image.ontouchstart;
+	            /* var arrow_image = newImage_extended(div,'assets/lobby/navigation-arrow.svg',{},'arrow-image'); //added_by_Yaroslav //custom images loading
+	              arrow_image.ontouchstart = Lobby.createSpriteBgLoadPage;
+	              arrow_image.onmousedown = arrow_image.ontouchstart; */
 	
 	            // Localization settings
 	            var title = (0, _lib.newHTML)('h1', 'localizationtitle', div);
@@ -8607,6 +8748,10 @@
 	                };
 	                languageButton.onmousedown = languageButton.ontouchstart;
 	            }
+	
+	            var storagePath = (0, _lib.newHTML)('div', 'storage-path', p);
+	            var sp = _iOS2.default.getStoragePath;
+	            storagePath.textContent = _Localization2.default.localize('StoragePath: ') + sp;
 	        }
 	    }, {
 	        key: 'setSubMenu',
@@ -9139,17 +9284,12 @@
 	                var query_custom_bkgs = function query_custom_bkgs(cb) {
 	
 	                    _IO2.default.query('custombkgs', json, function (results) {
-	
 	                        results = JSON.parse(results);
 	
 	                        if (results.length != 0) {
-	
 	                            //  let obj =  Object.assign(sprites, results);
-	
 	                            var length = backgrounds.length;
-	
 	                            for (var _i = 0; _i < results.length; _i++) {
-	
 	                                backgrounds[length + _i] = results[_i];
 	
 	                                backgrounds[length + _i].md5 = backgrounds[length + _i].md5 + "_custom" + "." + backgrounds[length + _i].ext;
@@ -9157,20 +9297,12 @@
 	
 	                                console.log('adding custom background ' + backgrounds[length + _i].md5);
 	                            }
-	
-	                            //  cb();
-	
 	                            MediaLib.localizeMediaNames();
 	                            MediaLib.generateKeys();
-	
 	                            whenDone();
 	                        } else {
-	
-	                            //    cb();
-	
 	                            MediaLib.localizeMediaNames();
 	                            MediaLib.generateKeys();
-	
 	                            whenDone();
 	                        }
 	                    });
@@ -9626,16 +9758,22 @@
 	            var data = _IO2.default.parseProjectData(aa);
 	            var id = data.id;
 	            var th = data.thumbnail;
+	            console.log("In addProjectLink th=" + th);
 	            if (!th) {
 	                return;
 	            }
 	            var thumb = typeof th === 'string' ? JSON.parse(th) : th;
+	            console.log("In addProjectLink thumb=" + JSON.stringify(thumb));
+	
 	            var pc = thumb.pagecount ? thumb.pagecount : 1;
 	            var tb = (0, _lib.newHTML)('div', 'projectthumb', parent);
 	            tb.setAttribute('id', id);
 	            tb.type = 'projectthumb';
 	            tb.thumb = thumb.md5;
+	            console.log("In addProjectLink tb=" + tb.toString());
+	
 	            var mt = (0, _lib.newHTML)('div', 'aproject p' + pc, tb);
+	            console.log("In addProjectLink mt=" + mt.toString());
 	            Home.insertThumbnail(mt, 192, 144, thumb);
 	            var label = (0, _lib.newHTML)('div', 'projecttitle', tb);
 	            var txt = (0, _lib.newHTML)('h4', undefined, label);
@@ -9663,7 +9801,11 @@
 	                _IO2.default.getAsset(md5, drawMe);
 	            }
 	            function drawMe(url) {
-	                img.src = url;
+	                console.log("In Home.js in static insertThumbnail in function drawMe url = " + url);
+	                //img.src = url;
+	                _iOS2.default.loadFileAPIBinaryURL(url.slice(url.lastIndexOf("/") + 1), function (result) {
+	                    img.src = result;
+	                });
 	            }
 	        }
 	    }]);
@@ -9714,6 +9856,8 @@
 	    value: true
 	});
 	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _ScratchJr = __webpack_require__(15);
@@ -9740,7 +9884,7 @@
 	
 	var _Page2 = _interopRequireDefault(_Page);
 	
-	var _Sprite = __webpack_require__(94);
+	var _Sprite = __webpack_require__(93);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
@@ -10203,6 +10347,7 @@
 	            if (th && _ScratchJr2.default.editmode != 'storyStarter') {
 	                // Don't try to delete the thumbnail in a sample project
 	                var thumb = typeof th === 'string' ? JSON.parse(th) : th;
+	                console.log((typeof thumb === 'undefined' ? 'undefined' : _typeof(thumb)) + "; " + console.log(_typeof(thumb.md5)));
 	                if (thumb.md5.indexOf('samples/') < 0) {
 	                    // In case we've exited story-starter mode
 	                    Project.thumbnailUnique(thumb.md5, id, function (isUnique) {
@@ -10504,7 +10649,7 @@
 	
 	var _BlockSpecs2 = _interopRequireDefault(_BlockSpecs);
 	
-	var _Runtime = __webpack_require__(97);
+	var _Runtime = __webpack_require__(96);
 	
 	var _Runtime2 = _interopRequireDefault(_Runtime);
 	
@@ -12606,6 +12751,7 @@
 	        key: 'addImageUrl',
 	        value: function addImageUrl(p, url) {
 	            var img = document.createElement('img');
+	            console.log("In painteditor/Paint.js in addImageUrl url=" + url);
 	            img.src = url;
 	            img.style.position = 'absolute';
 	            p.appendChild(img);
@@ -13500,6 +13646,7 @@
 	        value: function getImageFrom(url, ext) {
 	            var img = document.createElement('img');
 	            img.src = url + (ext ? '.' + ext : '.png');
+	            console.log("In editor/blocks/BlockSpecs.js in getImageFrom img.src = " + img.src);
 	            if (!img.complete) {
 	                loadassets[img.src] = img;
 	                loadCount++;
@@ -16778,6 +16925,7 @@
 	            var newctx = newcnv.getContext('2d');
 	            var dataurl = image.getAttribute('xlink:href');
 	            var img = document.createElement('img');
+	            console.log("In painteditor/SVGImage.js in draw dataurl = " + dataurl);
 	            img.src = dataurl;
 	            if (!img.complete) {
 	                img.onload = function () {
@@ -29432,15 +29580,20 @@
 	            // img.src = "svglibrary/" + IO.getFilename(md5) + '.svg';
 	
 	            if (data.md5.indexOf("_custom") != -1) {
-	
+	                console.log("In editor/Library.js in addUploadedThumbChoose data.altmd5=" + data.altmd5);
 	                _IO2.default.getAsset(data.altmd5, drawMe); //modified_by_Yaroslav
 	            } else {
-	
 	                img.src = "svglibrary/" + _IO2.default.getFilename(md5) + '.svg';
+	                console.log("In editor/Library.js in addUploadedThumbChoose img.src = " + img.src);
 	            }
 	
 	            function drawMe(dataurl) {
-	                img.src = dataurl;
+	                console.log("In Library.js in addUploadedThumbChoose / drawMe dataurl=" + dataurl);
+	                //img.src = dataurl;
+	
+	                _iOS2.default.loadFileAPIBinaryURL(dataurl.slice(dataurl.lastIndexOf("/") + 1), function (result) {
+	                    img.src = result;
+	                });
 	            }
 	
 	            if (_lib.isTablet) {
@@ -29448,7 +29601,6 @@
 	                    fcn(evt, tb);
 	                };
 	            } else {
-	
 	                tb.onmousedown = function (evt) {
 	                    fcn(evt, tb);
 	                };
@@ -29819,7 +29971,11 @@
 	                _IO2.default.getAsset(data.altmd5, drawMe);
 	            }
 	            function drawMe(dataurl) {
-	                img.src = dataurl;
+	                console.log("In Library.js in addAssetThumbChoose in drawMe dataurl = " + dataurl);
+	                // img.src = dataurl;
+	                _iOS2.default.loadFileAPIBinaryURL(dataurl.slice(dataurl.lastIndexOf("/") + 1), function (result) {
+	                    img.src = result;
+	                });
 	            }
 	            if (_lib.isTablet) {
 	                tb.ontouchstart = function (evt) {
@@ -29913,6 +30069,7 @@
 	            }
 	
 	            function drawMe(dataurl) {
+	                console.log("In Library.js in  addLocalThumbChoose /  in drawMe dataurl = " + dataurl);
 	                img.src = dataurl;
 	            }
 	
@@ -30927,7 +31084,7 @@
 	
 	var _UI2 = _interopRequireDefault(_UI);
 	
-	var _Sprite = __webpack_require__(94);
+	var _Sprite = __webpack_require__(93);
 	
 	var _Sprite2 = _interopRequireDefault(_Sprite);
 	
@@ -30955,7 +31112,7 @@
 	
 	var _Undo2 = _interopRequireDefault(_Undo);
 	
-	var _Matrix = __webpack_require__(96);
+	var _Matrix = __webpack_require__(95);
 	
 	var _Matrix2 = _interopRequireDefault(_Matrix);
 	
@@ -31101,7 +31258,7 @@
 	                return;
 	            }
 	
-	            if (md5.indexOf('/') > -1) {
+	            if (md5.indexOf('/') > -1 && md5.indexOf(_iOS2.default.storagePath) < 0) {
 	                _IO2.default.requestFromServer(md5, doNext);
 	            } else {
 	
@@ -31118,9 +31275,9 @@
 	            function doNext(str) {
 	                str = str.replace(/>\s*</g, '><');
 	                me.setSVG(str);
-	                if (str.indexOf('xlink:href') < 0 && _iOS2.default.path) {
-	                    me.setBackgroundImage(url, fcn); // does not have embedded images
-	                } else {
+	                if (str.indexOf('xlink:href') < 0 && url.indexOf(_iOS2.default.storagePath) < 0 /*&& iOS.path !== iOS.storagePath*/) {
+	                        me.setBackgroundImage(url, fcn); // does not have embedded images
+	                    } else {
 	                    var base64 = _IO2.default.getImageDataURL(me.md5, btoa(str));
 	                    _IO2.default.getImagesInSVG(str, function () {
 	                        me.setBackgroundImage(base64, fcn);
@@ -31142,7 +31299,12 @@
 	        key: 'setBackgroundImage',
 	        value: function setBackgroundImage(url, fcn) {
 	            var img = document.createElement('img');
-	            img.src = url;
+	            console.log("In editor/engine/Page.js in setBackgroundImage url = " + url);
+	            if (url.indexOf('data:image/svg+xml;base64,') < 0 && url.indexOf('svglibrary') < 0) {
+	                img.src = 'data:image/svg+xml;base64,' + url;
+	            } else {
+	                img.src = url;
+	            }
 	            this.bkg.originalImg = img.cloneNode(false);
 	            this.bkg.appendChild(img);
 	            (0, _lib.setProps)(img.style, {
@@ -31281,6 +31443,7 @@
 	                return;
 	            }
 	            var img = spr.type == 'sprite' ? spr.originalImg : spr.outline;
+	            console.log("spr.originalImg = " + spr.originalImg + "; " + "spr.outline = " + spr.outline);
 	            this.drawSpriteImage(ctx, img, spr, scale);
 	        }
 	    }, {
@@ -31974,6 +32137,8 @@
 	                    // TODO: check asset not exist
 	
 	
+	                    file_name = _iOS2.default.storagePath + file_name;
+	
 	                    var table = asset_type == "sprite" ? "customsprites" : "custombkgs";
 	
 	                    var json = {};
@@ -32004,9 +32169,9 @@
 	
 	                var contents = e.target.result;
 	
-	                if (contents.indexOf("data:application/zip;base64,") != -1) {
+	                if (contents.indexOf("data:application/octet-stream;base64,") != -1) {
 	
-	                    contents = e.target.result.replace("data:application/zip;base64,", "");
+	                    contents = e.target.result.replace("data:application/octet-stream;base64,", "");
 	
 	                    var receivedZip = (0, _jszip2.default)();
 	
@@ -32150,7 +32315,7 @@
 	        key: 'SjrRead_Android',
 	        value: function SjrRead_Android(data) {
 	
-	            var contents = data.replace("data:;base64,", "");
+	            var contents = data.replace("data:application/octet-stream;base64,", "");
 	            _iOS2.default.loadProjectFromSjr(contents);
 	        }
 	    }, {
@@ -32162,7 +32327,12 @@
 	            }
 	            var reader = new FileReader();
 	            reader.onload = function (e) {
-	                var contents = e.target.result.replace("data:;base64,", "");
+	                var contents = e.target.result.replace("data:application/octet-stream;base64,", "");
+	
+	                if (node_process.platform === "win32") {
+	                    contents = e.target.result.replace("data:;base64,", "");
+	                }
+	
 	                _iOS2.default.loadProjectFromSjr(contents);
 	            };
 	            reader.readAsDataURL(file);
@@ -32306,18 +32476,18 @@
 	                divButtonSave.onmousedown = saveAndShare;
 	            }
 	
-	            function readFile(e) {
-	                var file = e.target.files[0];
-	                if (!file) {
+	            /*  function readFile(e){
+	                 var file = e.target.files[0];
+	                 if (!file) {
 	                    return;
-	                }
-	                var reader = new FileReader();
-	                reader.onload = function (e) {
-	                    var contents = e.target.result.replace("data:;base64,", "");
-	                    _iOS2.default.loadProjectFromSjr(contents);
-	                };
-	                reader.readAsDataURL(file);
-	            }
+	                 }
+	                 var reader = new FileReader();
+	                 reader.onload = function(e){
+	                    var contents = e.target.result.replace("data:application/octet-stream;base64,", "");
+	                    iOS.loadProjectFromSjr(contents);
+	                 };
+	                 reader.readAsDataURL(file);
+	              } */
 	
 	            var divButtonLoad;
 	
@@ -34516,7 +34686,7 @@
 	 * @deprecated
 	 * This namespace will be removed in a future version without replacement.
 	 */
-	JSZip.utils = __webpack_require__(93);
+	JSZip.utils = __webpack_require__(92);
 	
 	JSZip.base64 = {
 	    /**
@@ -34794,6 +34964,24 @@
 	};
 	
 	/**
+	 * Merge the objects passed as parameters into a new one.
+	 * @private
+	 * @param {...Object} var_args All objects to merge.
+	 * @return {Object} a new object with the data of the others.
+	 */
+	var extend = function() {
+	    var result = {}, i, attr;
+	    for (i = 0; i < arguments.length; i++) { // arguments is not enumerable in some browsers
+	        for (attr in arguments[i]) {
+	            if (arguments[i].hasOwnProperty(attr) && typeof result[attr] === "undefined") {
+	                result[attr] = arguments[i][attr];
+	            }
+	        }
+	    }
+	    return result;
+	};
+	
+	/**
 	 * Transforms the (incomplete) options from the user into the complete
 	 * set of options to create a file.
 	 * @private
@@ -34805,7 +34993,7 @@
 	    if (o.base64 === true && (o.binary === null || o.binary === undefined)) {
 	        o.binary = true;
 	    }
-	    o = utils.extend(o, defaults);
+	    o = extend(o, defaults);
 	    o.date = o.date || new Date();
 	    if (o.compression !== null) o.compression = o.compression.toUpperCase();
 	
@@ -35040,16 +35228,12 @@
 	 * @param {JSZip.CompressedObject} compressedObject the compressed object.
 	 * @param {number} offset the current offset from the start of the zip file.
 	 * @param {String} platform let's pretend we are this platform (change platform dependents fields)
-	 * @param {Function} encodeFileName the function to encode the file name / comment.
 	 * @return {object} the zip parts.
 	 */
-	var generateZipParts = function(name, file, compressedObject, offset, platform, encodeFileName) {
+	var generateZipParts = function(name, file, compressedObject, offset, platform) {
 	    var data = compressedObject.compressedContent,
-	        useCustomEncoding = encodeFileName !== utf8.utf8encode,
-	        encodedFileName = utils.transformTo("string", encodeFileName(file.name)),
 	        utfEncodedFileName = utils.transformTo("string", utf8.utf8encode(file.name)),
 	        comment = file.comment || "",
-	        encodedComment = utils.transformTo("string", encodeFileName(comment)),
 	        utfEncodedComment = utils.transformTo("string", utf8.utf8encode(comment)),
 	        useUTF8ForFileName = utfEncodedFileName.length !== file.name.length,
 	        useUTF8ForComment = utfEncodedComment.length !== comment.length,
@@ -35121,7 +35305,7 @@
 	            // Version
 	            decToHex(1, 1) +
 	            // NameCRC32
-	            decToHex(crc32(encodedFileName), 4) +
+	            decToHex(crc32(utfEncodedFileName), 4) +
 	            // UnicodeName
 	            utfEncodedFileName;
 	
@@ -35140,7 +35324,7 @@
 	            // Version
 	            decToHex(1, 1) +
 	            // CommentCRC32
-	            decToHex(this.crc32(encodedComment), 4) +
+	            decToHex(this.crc32(utfEncodedComment), 4) +
 	            // UnicodeName
 	            utfEncodedComment;
 	
@@ -35159,7 +35343,7 @@
 	    header += "\x0A\x00";
 	    // general purpose bit flag
 	    // set bit 11 if utf8
-	    header += !useCustomEncoding && (useUTF8ForFileName || useUTF8ForComment) ? "\x00\x08" : "\x00\x00";
+	    header += (useUTF8ForFileName || useUTF8ForComment) ? "\x00\x08" : "\x00\x00";
 	    // compression method
 	    header += compressedObject.compressionMethod;
 	    // last mod file time
@@ -35173,12 +35357,12 @@
 	    // uncompressed size
 	    header += decToHex(compressedObject.uncompressedSize, 4);
 	    // file name length
-	    header += decToHex(encodedFileName.length, 2);
+	    header += decToHex(utfEncodedFileName.length, 2);
 	    // extra field length
 	    header += decToHex(extraFields.length, 2);
 	
 	
-	    var fileRecord = signature.LOCAL_FILE_HEADER + header + encodedFileName + extraFields;
+	    var fileRecord = signature.LOCAL_FILE_HEADER + header + utfEncodedFileName + extraFields;
 	
 	    var dirRecord = signature.CENTRAL_FILE_HEADER +
 	    // version made by (00: DOS)
@@ -35186,7 +35370,7 @@
 	    // file header (common to file and central directory)
 	    header +
 	    // file comment length
-	    decToHex(encodedComment.length, 2) +
+	    decToHex(utfEncodedComment.length, 2) +
 	    // disk number start
 	    "\x00\x00" +
 	    // internal file attributes TODO
@@ -35196,11 +35380,11 @@
 	    // relative offset of local header
 	    decToHex(offset, 4) +
 	    // file name
-	    encodedFileName +
+	    utfEncodedFileName +
 	    // extra field
 	    extraFields +
 	    // file comment
-	    encodedComment;
+	    utfEncodedComment;
 	
 	    return {
 	        fileRecord: fileRecord,
@@ -35240,7 +35424,7 @@
 	            }
 	            file = this.files[filename];
 	            // return a new object, don't let the user mess with our internal objects :)
-	            fileClone = new ZipObject(file.name, file._data, utils.extend(file.options));
+	            fileClone = new ZipObject(file.name, file._data, extend(file.options));
 	            relativePath = filename.slice(this.root.length, filename.length);
 	            if (filename.slice(0, this.root.length) === this.root && // the file is in the current root
 	            search(relativePath, fileClone)) { // and the file matches the function
@@ -35347,15 +35531,14 @@
 	     * @return {String|Uint8Array|ArrayBuffer|Buffer|Blob} the zip file
 	     */
 	    generate: function(options) {
-	        options = utils.extend(options || {}, {
+	        options = extend(options || {}, {
 	            base64: true,
 	            compression: "STORE",
 	            compressionOptions : null,
 	            type: "base64",
 	            platform: "DOS",
 	            comment: null,
-	            mimeType: 'application/zip',
-	            encodeFileName: utf8.utf8encode
+	            mimeType: 'application/zip'
 	        });
 	
 	        utils.checkSupport(options.type);
@@ -35377,7 +35560,7 @@
 	            localDirLength = 0,
 	            centralDirLength = 0,
 	            writer, i,
-	            encodedComment = utils.transformTo("string", options.encodeFileName(options.comment || this.comment || ""));
+	            utfEncodedComment = utils.transformTo("string", this.utf8encode(options.comment || this.comment || ""));
 	
 	        // first, generate all the zip parts.
 	        for (var name in this.files) {
@@ -35395,7 +35578,7 @@
 	
 	            var compressedObject = generateCompressedObjectFrom.call(this, file, compression, compressionOptions);
 	
-	            var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength, options.platform, options.encodeFileName);
+	            var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength, options.platform);
 	            localDirLength += zipPart.fileRecord.length + compressedObject.compressedSize;
 	            centralDirLength += zipPart.dirRecord.length;
 	            zipData.push(zipPart);
@@ -35418,9 +35601,9 @@
 	        // offset of start of central directory with respect to the starting disk number
 	        decToHex(localDirLength, 4) +
 	        // .ZIP file comment length
-	        decToHex(encodedComment.length, 2) +
+	        decToHex(utfEncodedComment.length, 2) +
 	        // .ZIP file comment
-	        encodedComment;
+	        utfEncodedComment;
 	
 	
 	        // we have all the parts (and the total length)
@@ -35538,7 +35721,7 @@
 	/* WEBPACK VAR INJECTION */(function(global) {/*!
 	 * The buffer module from node.js, for the browser.
 	 *
-	 * @author   Feross Aboukhadijeh <http://feross.org>
+	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
 	 * @license  MIT
 	 */
 	/* eslint-disable no-proto */
@@ -37352,98 +37535,65 @@
 	revLookup['-'.charCodeAt(0)] = 62
 	revLookup['_'.charCodeAt(0)] = 63
 	
-	function getLens (b64) {
+	function placeHoldersCount (b64) {
 	  var len = b64.length
-	
 	  if (len % 4 > 0) {
 	    throw new Error('Invalid string. Length must be a multiple of 4')
 	  }
 	
-	  // Trim off extra bytes after placeholder bytes are found
-	  // See: https://github.com/beatgammit/base64-js/issues/42
-	  var validLen = b64.indexOf('=')
-	  if (validLen === -1) validLen = len
-	
-	  var placeHoldersLen = validLen === len
-	    ? 0
-	    : 4 - (validLen % 4)
-	
-	  return [validLen, placeHoldersLen]
+	  // the number of equal signs (place holders)
+	  // if there are two placeholders, than the two characters before it
+	  // represent one byte
+	  // if there is only one, then the three characters before it represent 2 bytes
+	  // this is just a cheap hack to not do indexOf twice
+	  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
 	}
 	
-	// base64 is 4/3 + up to two characters of the original data
 	function byteLength (b64) {
-	  var lens = getLens(b64)
-	  var validLen = lens[0]
-	  var placeHoldersLen = lens[1]
-	  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-	}
-	
-	function _byteLength (b64, validLen, placeHoldersLen) {
-	  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+	  // base64 is 4/3 + up to two characters of the original data
+	  return (b64.length * 3 / 4) - placeHoldersCount(b64)
 	}
 	
 	function toByteArray (b64) {
-	  var tmp
-	  var lens = getLens(b64)
-	  var validLen = lens[0]
-	  var placeHoldersLen = lens[1]
+	  var i, l, tmp, placeHolders, arr
+	  var len = b64.length
+	  placeHolders = placeHoldersCount(b64)
 	
-	  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-	
-	  var curByte = 0
+	  arr = new Arr((len * 3 / 4) - placeHolders)
 	
 	  // if there are placeholders, only get up to the last complete 4 chars
-	  var len = placeHoldersLen > 0
-	    ? validLen - 4
-	    : validLen
+	  l = placeHolders > 0 ? len - 4 : len
 	
-	  var i
-	  for (i = 0; i < len; i += 4) {
-	    tmp =
-	      (revLookup[b64.charCodeAt(i)] << 18) |
-	      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-	      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-	      revLookup[b64.charCodeAt(i + 3)]
-	    arr[curByte++] = (tmp >> 16) & 0xFF
-	    arr[curByte++] = (tmp >> 8) & 0xFF
-	    arr[curByte++] = tmp & 0xFF
+	  var L = 0
+	
+	  for (i = 0; i < l; i += 4) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+	    arr[L++] = (tmp >> 16) & 0xFF
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
 	  }
 	
-	  if (placeHoldersLen === 2) {
-	    tmp =
-	      (revLookup[b64.charCodeAt(i)] << 2) |
-	      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-	    arr[curByte++] = tmp & 0xFF
-	  }
-	
-	  if (placeHoldersLen === 1) {
-	    tmp =
-	      (revLookup[b64.charCodeAt(i)] << 10) |
-	      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-	      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-	    arr[curByte++] = (tmp >> 8) & 0xFF
-	    arr[curByte++] = tmp & 0xFF
+	  if (placeHolders === 2) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+	    arr[L++] = tmp & 0xFF
+	  } else if (placeHolders === 1) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
 	  }
 	
 	  return arr
 	}
 	
 	function tripletToBase64 (num) {
-	  return lookup[num >> 18 & 0x3F] +
-	    lookup[num >> 12 & 0x3F] +
-	    lookup[num >> 6 & 0x3F] +
-	    lookup[num & 0x3F]
+	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
 	}
 	
 	function encodeChunk (uint8, start, end) {
 	  var tmp
 	  var output = []
 	  for (var i = start; i < end; i += 3) {
-	    tmp =
-	      ((uint8[i] << 16) & 0xFF0000) +
-	      ((uint8[i + 1] << 8) & 0xFF00) +
-	      (uint8[i + 2] & 0xFF)
+	    tmp = ((uint8[i] << 16) & 0xFF0000) + ((uint8[i + 1] << 8) & 0xFF00) + (uint8[i + 2] & 0xFF)
 	    output.push(tripletToBase64(tmp))
 	  }
 	  return output.join('')
@@ -37453,33 +37603,30 @@
 	  var tmp
 	  var len = uint8.length
 	  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+	  var output = ''
 	  var parts = []
 	  var maxChunkLength = 16383 // must be multiple of 3
 	
 	  // go through the array every three bytes, we'll deal with trailing stuff later
 	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-	    parts.push(encodeChunk(
-	      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
-	    ))
+	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
 	  }
 	
 	  // pad the end with zeros, but make sure to not forget the extra bytes
 	  if (extraBytes === 1) {
 	    tmp = uint8[len - 1]
-	    parts.push(
-	      lookup[tmp >> 2] +
-	      lookup[(tmp << 4) & 0x3F] +
-	      '=='
-	    )
+	    output += lookup[tmp >> 2]
+	    output += lookup[(tmp << 4) & 0x3F]
+	    output += '=='
 	  } else if (extraBytes === 2) {
-	    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-	    parts.push(
-	      lookup[tmp >> 10] +
-	      lookup[(tmp >> 4) & 0x3F] +
-	      lookup[(tmp << 2) & 0x3F] +
-	      '='
-	    )
+	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+	    output += lookup[tmp >> 10]
+	    output += lookup[(tmp >> 4) & 0x3F]
+	    output += lookup[(tmp << 2) & 0x3F]
+	    output += '='
 	  }
+	
+	  parts.push(output)
 	
 	  return parts.join('')
 	}
@@ -37491,7 +37638,7 @@
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 	  var e, m
-	  var eLen = (nBytes * 8) - mLen - 1
+	  var eLen = nBytes * 8 - mLen - 1
 	  var eMax = (1 << eLen) - 1
 	  var eBias = eMax >> 1
 	  var nBits = -7
@@ -37504,12 +37651,12 @@
 	  e = s & ((1 << (-nBits)) - 1)
 	  s >>= (-nBits)
 	  nBits += eLen
-	  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+	  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
 	
 	  m = e & ((1 << (-nBits)) - 1)
 	  e >>= (-nBits)
 	  nBits += mLen
-	  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+	  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
 	
 	  if (e === 0) {
 	    e = 1 - eBias
@@ -37524,7 +37671,7 @@
 	
 	exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 	  var e, m, c
-	  var eLen = (nBytes * 8) - mLen - 1
+	  var eLen = nBytes * 8 - mLen - 1
 	  var eMax = (1 << eLen) - 1
 	  var eBias = eMax >> 1
 	  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
@@ -37557,7 +37704,7 @@
 	      m = 0
 	      e = eMax
 	    } else if (e + eBias >= 1) {
-	      m = ((value * c) - 1) * Math.pow(2, mLen)
+	      m = (value * c - 1) * Math.pow(2, mLen)
 	      e = e + eBias
 	    } else {
 	      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
@@ -37916,24 +38063,6 @@
 	    return Object.prototype.toString.call(object) === "[object RegExp]";
 	};
 	
-	/**
-	 * Merge the objects passed as parameters into a new one.
-	 * @private
-	 * @param {...Object} var_args All objects to merge.
-	 * @return {Object} a new object with the data of the others.
-	 */
-	exports.extend = function() {
-	    var result = {}, i, attr;
-	    for (i = 0; i < arguments.length; i++) { // arguments is not enumerable in some browsers
-	        for (attr in arguments[i]) {
-	            if (arguments[i].hasOwnProperty(attr) && typeof result[attr] === "undefined") {
-	                result[attr] = arguments[i][attr];
-	            }
-	        }
-	    }
-	    return result;
-	};
-	
 
 
 /***/ }),
@@ -38008,9 +38137,6 @@
 	                (typeof Uint16Array !== 'undefined') &&
 	                (typeof Int32Array !== 'undefined');
 	
-	function _has(obj, key) {
-	  return Object.prototype.hasOwnProperty.call(obj, key);
-	}
 	
 	exports.assign = function (obj /*from1, from2, from3, ...*/) {
 	  var sources = Array.prototype.slice.call(arguments, 1);
@@ -38023,7 +38149,7 @@
 	    }
 	
 	    for (var p in source) {
-	      if (_has(source, p)) {
+	      if (source.hasOwnProperty(p)) {
 	        obj[p] = source[p];
 	      }
 	    }
@@ -38153,7 +38279,7 @@
 	/* internal
 	 * Deflate.chunks -> Array
 	 *
-	 * Chunks of output data, if [[Deflate#onData]] not overridden.
+	 * Chunks of output data, if [[Deflate#onData]] not overriden.
 	 **/
 	
 	/**
@@ -38306,7 +38432,7 @@
 	 * - data (Uint8Array|Array|ArrayBuffer|String): input data. Strings will be
 	 *   converted to utf8 byte sequence.
 	 * - mode (Number|Boolean): 0..6 for corresponding Z_NO_FLUSH..Z_TREE modes.
-	 *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` means Z_FINISH.
+	 *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` meansh Z_FINISH.
 	 *
 	 * Sends input data to deflate pipe, generating [[Deflate#onData]] calls with
 	 * new compressed chunks. Returns `true` on success. The last data block must have
@@ -38395,7 +38521,7 @@
 	
 	/**
 	 * Deflate#onData(chunk) -> Void
-	 * - chunk (Uint8Array|Array|String): output data. Type of array depends
+	 * - chunk (Uint8Array|Array|String): ouput data. Type of array depends
 	 *   on js engine support. When string output requested, each chunk
 	 *   will be string.
 	 *
@@ -38472,7 +38598,7 @@
 	  deflator.push(input, true);
 	
 	  // That will never happens, if you don't cheat with options :)
-	  if (deflator.err) { throw deflator.msg || msg[deflator.err]; }
+	  if (deflator.err) { throw deflator.msg; }
 	
 	  return deflator.result;
 	}
@@ -38519,25 +38645,6 @@
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	var utils   = __webpack_require__(62);
 	var trees   = __webpack_require__(65);
@@ -39974,7 +40081,7 @@
 	                    (!s.gzhead.extra ? 0 : 4) +
 	                    (!s.gzhead.name ? 0 : 8) +
 	                    (!s.gzhead.comment ? 0 : 16)
-	        );
+	                );
 	        put_byte(s, s.gzhead.time & 0xff);
 	        put_byte(s, (s.gzhead.time >> 8) & 0xff);
 	        put_byte(s, (s.gzhead.time >> 16) & 0xff);
@@ -40400,26 +40507,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
-	
-	/* eslint-disable space-unary-ops */
 	
 	var utils = __webpack_require__(62);
 	
@@ -40530,7 +40617,7 @@
 	
 	var DIST_CODE_LEN = 512; /* see definition of array dist_code below */
 	
-	// !!!! Use flat array instead of structure, Freq = i*2, Len = i*2+1
+	// !!!! Use flat array insdead of structure, Freq = i*2, Len = i*2+1
 	var static_ltree  = new Array((L_CODES + 2) * 2);
 	zero(static_ltree);
 	/* The static literal tree. Since the bit lengths are imposed, there is no
@@ -41585,7 +41672,7 @@
 	    s.dyn_dtree[d_code(dist) * 2]/*.Freq*/++;
 	  }
 	
-	// (!) This block is disabled in zlib defaults,
+	// (!) This block is disabled in zlib defailts,
 	// don't enable it for binary compatibility
 	
 	//#ifdef TRUNCATE_BLOCK
@@ -41629,27 +41716,8 @@
 	'use strict';
 	
 	// Note: adler32 takes 12% for level 0 and 2% for level 6.
-	// It isn't worth it to make additional optimizations as in original.
+	// It doesn't worth to make additional optimizationa as in original.
 	// Small size is preferable.
-	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	function adler32(adler, buf, len, pos) {
 	  var s1 = (adler & 0xffff) |0,
@@ -41689,24 +41757,6 @@
 	// So write code to minimize size - no pregenerated tables
 	// and array tools dependencies.
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	// Use ordinary array, since untyped makes no boost here
 	function makeTable() {
@@ -41750,25 +41800,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
-	
 	module.exports = {
 	  2:      'need dictionary',     /* Z_NEED_DICT       2  */
 	  1:      'stream end',          /* Z_STREAM_END      1  */
@@ -41796,7 +41827,7 @@
 	// Quick check if we can use fast array to bin string conversion
 	//
 	// - apply(Array) can fail on Android 2.2
-	// - apply(Uint8Array) can fail on iOS 5.1 Safari
+	// - apply(Uint8Array) can fail on iOS 5.1 Safary
 	//
 	var STR_APPLY_OK = true;
 	var STR_APPLY_UIA_OK = true;
@@ -41871,10 +41902,8 @@
 	
 	// Helper (used in 2 places)
 	function buf2binstring(buf, len) {
-	  // On Chrome, the arguments in a function call that are allowed is `65534`.
-	  // If the length of the buffer is smaller than that, we can use this optimization,
-	  // otherwise we will take a slower path.
-	  if (len < 65534) {
+	  // use fallback for big arrays to avoid stack overflow
+	  if (len < 65537) {
 	    if ((buf.subarray && STR_APPLY_UIA_OK) || (!buf.subarray && STR_APPLY_OK)) {
 	      return String.fromCharCode.apply(null, utils.shrinkBuf(buf, len));
 	    }
@@ -41963,11 +41992,11 @@
 	  pos = max - 1;
 	  while (pos >= 0 && (buf[pos] & 0xC0) === 0x80) { pos--; }
 	
-	  // Very small and broken sequence,
+	  // Fuckup - very small and broken sequence,
 	  // return max, because we should return something anyway.
 	  if (pos < 0) { return max; }
 	
-	  // If we came to start of buffer - that means buffer is too small,
+	  // If we came to start of buffer - that means vuffer is too small,
 	  // return max too.
 	  if (pos === 0) { return max; }
 	
@@ -41981,24 +42010,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	function ZStream() {
 	  /* next input byte */
@@ -42056,7 +42067,7 @@
 	/* internal
 	 * inflate.chunks -> Array
 	 *
-	 * Chunks of output data, if [[Inflate#onData]] not overridden.
+	 * Chunks of output data, if [[Inflate#onData]] not overriden.
 	 **/
 	
 	/**
@@ -42178,29 +42189,13 @@
 	  this.header = new GZheader();
 	
 	  zlib_inflate.inflateGetHeader(this.strm, this.header);
-	
-	  // Setup dictionary
-	  if (opt.dictionary) {
-	    // Convert data if needed
-	    if (typeof opt.dictionary === 'string') {
-	      opt.dictionary = strings.string2buf(opt.dictionary);
-	    } else if (toString.call(opt.dictionary) === '[object ArrayBuffer]') {
-	      opt.dictionary = new Uint8Array(opt.dictionary);
-	    }
-	    if (opt.raw) { //In raw mode we need to set the dictionary early
-	      status = zlib_inflate.inflateSetDictionary(this.strm, opt.dictionary);
-	      if (status !== c.Z_OK) {
-	        throw new Error(msg[status]);
-	      }
-	    }
-	  }
 	}
 	
 	/**
 	 * Inflate#push(data[, mode]) -> Boolean
 	 * - data (Uint8Array|Array|ArrayBuffer|String): input data
 	 * - mode (Number|Boolean): 0..6 for corresponding Z_NO_FLUSH..Z_TREE modes.
-	 *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` means Z_FINISH.
+	 *   See constants. Skipped or `false` means Z_NO_FLUSH, `true` meansh Z_FINISH.
 	 *
 	 * Sends input data to inflate pipe, generating [[Inflate#onData]] calls with
 	 * new output chunks. Returns `true` on success. The last data block must have
@@ -42230,6 +42225,7 @@
 	  var dictionary = this.options.dictionary;
 	  var status, _mode;
 	  var next_out_utf8, tail, utf8str;
+	  var dict;
 	
 	  // Flag to properly process Z_BUF_ERROR on testing inflate call
 	  // when we check that all output data was flushed.
@@ -42261,7 +42257,17 @@
 	    status = zlib_inflate.inflate(strm, c.Z_NO_FLUSH);    /* no bad return value */
 	
 	    if (status === c.Z_NEED_DICT && dictionary) {
-	      status = zlib_inflate.inflateSetDictionary(this.strm, dictionary);
+	      // Convert data if needed
+	      if (typeof dictionary === 'string') {
+	        dict = strings.string2buf(dictionary);
+	      } else if (toString.call(dictionary) === '[object ArrayBuffer]') {
+	        dict = new Uint8Array(dictionary);
+	      } else {
+	        dict = dictionary;
+	      }
+	
+	      status = zlib_inflate.inflateSetDictionary(this.strm, dict);
+	
 	    }
 	
 	    if (status === c.Z_BUF_ERROR && allowBufError === true) {
@@ -42336,7 +42342,7 @@
 	
 	/**
 	 * Inflate#onData(chunk) -> Void
-	 * - chunk (Uint8Array|Array|String): output data. Type of array depends
+	 * - chunk (Uint8Array|Array|String): ouput data. Type of array depends
 	 *   on js engine support. When string output requested, each chunk
 	 *   will be string.
 	 *
@@ -42363,7 +42369,7 @@
 	  if (status === c.Z_OK) {
 	    if (this.options.to === 'string') {
 	      // Glue & convert here, until we teach pako to send
-	      // utf8 aligned strings to onData
+	      // utf8 alligned strings to onData
 	      this.result = this.chunks.join('');
 	    } else {
 	      this.result = utils.flattenChunks(this.chunks);
@@ -42420,7 +42426,7 @@
 	  inflator.push(input, true);
 	
 	  // That will never happens, if you don't cheat with options :)
-	  if (inflator.err) { throw inflator.msg || msg[inflator.err]; }
+	  if (inflator.err) { throw inflator.msg; }
 	
 	  return inflator.result;
 	}
@@ -42463,24 +42469,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	var utils         = __webpack_require__(62);
 	var adler32       = __webpack_require__(66);
@@ -42895,72 +42883,162 @@
 	  inf_leave: // goto emulation
 	  for (;;) {
 	    switch (state.mode) {
-	      case HEAD:
-	        if (state.wrap === 0) {
-	          state.mode = TYPEDO;
-	          break;
-	        }
-	        //=== NEEDBITS(16);
-	        while (bits < 16) {
-	          if (have === 0) { break inf_leave; }
-	          have--;
-	          hold += input[next++] << bits;
-	          bits += 8;
-	        }
-	        //===//
-	        if ((state.wrap & 2) && hold === 0x8b1f) {  /* gzip header */
-	          state.check = 0/*crc32(0L, Z_NULL, 0)*/;
-	          //=== CRC2(state.check, hold);
-	          hbuf[0] = hold & 0xff;
-	          hbuf[1] = (hold >>> 8) & 0xff;
-	          state.check = crc32(state.check, hbuf, 2, 0);
-	          //===//
-	
-	          //=== INITBITS();
-	          hold = 0;
-	          bits = 0;
-	          //===//
-	          state.mode = FLAGS;
-	          break;
-	        }
-	        state.flags = 0;           /* expect zlib header */
-	        if (state.head) {
-	          state.head.done = false;
-	        }
-	        if (!(state.wrap & 1) ||   /* check if zlib header allowed */
-	          (((hold & 0xff)/*BITS(8)*/ << 8) + (hold >> 8)) % 31) {
-	          strm.msg = 'incorrect header check';
-	          state.mode = BAD;
-	          break;
-	        }
-	        if ((hold & 0x0f)/*BITS(4)*/ !== Z_DEFLATED) {
-	          strm.msg = 'unknown compression method';
-	          state.mode = BAD;
-	          break;
-	        }
-	        //--- DROPBITS(4) ---//
-	        hold >>>= 4;
-	        bits -= 4;
-	        //---//
-	        len = (hold & 0x0f)/*BITS(4)*/ + 8;
-	        if (state.wbits === 0) {
-	          state.wbits = len;
-	        }
-	        else if (len > state.wbits) {
-	          strm.msg = 'invalid window size';
-	          state.mode = BAD;
-	          break;
-	        }
-	        state.dmax = 1 << len;
-	        //Tracev((stderr, "inflate:   zlib header ok\n"));
-	        strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
-	        state.mode = hold & 0x200 ? DICTID : TYPE;
-	        //=== INITBITS();
-	        hold = 0;
-	        bits = 0;
-	        //===//
+	    case HEAD:
+	      if (state.wrap === 0) {
+	        state.mode = TYPEDO;
 	        break;
-	      case FLAGS:
+	      }
+	      //=== NEEDBITS(16);
+	      while (bits < 16) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      if ((state.wrap & 2) && hold === 0x8b1f) {  /* gzip header */
+	        state.check = 0/*crc32(0L, Z_NULL, 0)*/;
+	        //=== CRC2(state.check, hold);
+	        hbuf[0] = hold & 0xff;
+	        hbuf[1] = (hold >>> 8) & 0xff;
+	        state.check = crc32(state.check, hbuf, 2, 0);
+	        //===//
+	
+	        //=== INITBITS();
+	        hold = 0;
+	        bits = 0;
+	        //===//
+	        state.mode = FLAGS;
+	        break;
+	      }
+	      state.flags = 0;           /* expect zlib header */
+	      if (state.head) {
+	        state.head.done = false;
+	      }
+	      if (!(state.wrap & 1) ||   /* check if zlib header allowed */
+	        (((hold & 0xff)/*BITS(8)*/ << 8) + (hold >> 8)) % 31) {
+	        strm.msg = 'incorrect header check';
+	        state.mode = BAD;
+	        break;
+	      }
+	      if ((hold & 0x0f)/*BITS(4)*/ !== Z_DEFLATED) {
+	        strm.msg = 'unknown compression method';
+	        state.mode = BAD;
+	        break;
+	      }
+	      //--- DROPBITS(4) ---//
+	      hold >>>= 4;
+	      bits -= 4;
+	      //---//
+	      len = (hold & 0x0f)/*BITS(4)*/ + 8;
+	      if (state.wbits === 0) {
+	        state.wbits = len;
+	      }
+	      else if (len > state.wbits) {
+	        strm.msg = 'invalid window size';
+	        state.mode = BAD;
+	        break;
+	      }
+	      state.dmax = 1 << len;
+	      //Tracev((stderr, "inflate:   zlib header ok\n"));
+	      strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
+	      state.mode = hold & 0x200 ? DICTID : TYPE;
+	      //=== INITBITS();
+	      hold = 0;
+	      bits = 0;
+	      //===//
+	      break;
+	    case FLAGS:
+	      //=== NEEDBITS(16); */
+	      while (bits < 16) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      state.flags = hold;
+	      if ((state.flags & 0xff) !== Z_DEFLATED) {
+	        strm.msg = 'unknown compression method';
+	        state.mode = BAD;
+	        break;
+	      }
+	      if (state.flags & 0xe000) {
+	        strm.msg = 'unknown header flags set';
+	        state.mode = BAD;
+	        break;
+	      }
+	      if (state.head) {
+	        state.head.text = ((hold >> 8) & 1);
+	      }
+	      if (state.flags & 0x0200) {
+	        //=== CRC2(state.check, hold);
+	        hbuf[0] = hold & 0xff;
+	        hbuf[1] = (hold >>> 8) & 0xff;
+	        state.check = crc32(state.check, hbuf, 2, 0);
+	        //===//
+	      }
+	      //=== INITBITS();
+	      hold = 0;
+	      bits = 0;
+	      //===//
+	      state.mode = TIME;
+	      /* falls through */
+	    case TIME:
+	      //=== NEEDBITS(32); */
+	      while (bits < 32) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      if (state.head) {
+	        state.head.time = hold;
+	      }
+	      if (state.flags & 0x0200) {
+	        //=== CRC4(state.check, hold)
+	        hbuf[0] = hold & 0xff;
+	        hbuf[1] = (hold >>> 8) & 0xff;
+	        hbuf[2] = (hold >>> 16) & 0xff;
+	        hbuf[3] = (hold >>> 24) & 0xff;
+	        state.check = crc32(state.check, hbuf, 4, 0);
+	        //===
+	      }
+	      //=== INITBITS();
+	      hold = 0;
+	      bits = 0;
+	      //===//
+	      state.mode = OS;
+	      /* falls through */
+	    case OS:
+	      //=== NEEDBITS(16); */
+	      while (bits < 16) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      if (state.head) {
+	        state.head.xflags = (hold & 0xff);
+	        state.head.os = (hold >> 8);
+	      }
+	      if (state.flags & 0x0200) {
+	        //=== CRC2(state.check, hold);
+	        hbuf[0] = hold & 0xff;
+	        hbuf[1] = (hold >>> 8) & 0xff;
+	        state.check = crc32(state.check, hbuf, 2, 0);
+	        //===//
+	      }
+	      //=== INITBITS();
+	      hold = 0;
+	      bits = 0;
+	      //===//
+	      state.mode = EXLEN;
+	      /* falls through */
+	    case EXLEN:
+	      if (state.flags & 0x0400) {
 	        //=== NEEDBITS(16); */
 	        while (bits < 16) {
 	          if (have === 0) { break inf_leave; }
@@ -42969,19 +43047,9 @@
 	          bits += 8;
 	        }
 	        //===//
-	        state.flags = hold;
-	        if ((state.flags & 0xff) !== Z_DEFLATED) {
-	          strm.msg = 'unknown compression method';
-	          state.mode = BAD;
-	          break;
-	        }
-	        if (state.flags & 0xe000) {
-	          strm.msg = 'unknown header flags set';
-	          state.mode = BAD;
-	          break;
-	        }
+	        state.length = hold;
 	        if (state.head) {
-	          state.head.text = ((hold >> 8) & 1);
+	          state.head.extra_len = hold;
 	        }
 	        if (state.flags & 0x0200) {
 	          //=== CRC2(state.check, hold);
@@ -42994,251 +43062,305 @@
 	        hold = 0;
 	        bits = 0;
 	        //===//
-	        state.mode = TIME;
-	        /* falls through */
-	      case TIME:
-	        //=== NEEDBITS(32); */
-	        while (bits < 32) {
-	          if (have === 0) { break inf_leave; }
-	          have--;
-	          hold += input[next++] << bits;
-	          bits += 8;
-	        }
-	        //===//
-	        if (state.head) {
-	          state.head.time = hold;
-	        }
-	        if (state.flags & 0x0200) {
-	          //=== CRC4(state.check, hold)
-	          hbuf[0] = hold & 0xff;
-	          hbuf[1] = (hold >>> 8) & 0xff;
-	          hbuf[2] = (hold >>> 16) & 0xff;
-	          hbuf[3] = (hold >>> 24) & 0xff;
-	          state.check = crc32(state.check, hbuf, 4, 0);
-	          //===
-	        }
-	        //=== INITBITS();
-	        hold = 0;
-	        bits = 0;
-	        //===//
-	        state.mode = OS;
-	        /* falls through */
-	      case OS:
-	        //=== NEEDBITS(16); */
-	        while (bits < 16) {
-	          if (have === 0) { break inf_leave; }
-	          have--;
-	          hold += input[next++] << bits;
-	          bits += 8;
-	        }
-	        //===//
-	        if (state.head) {
-	          state.head.xflags = (hold & 0xff);
-	          state.head.os = (hold >> 8);
-	        }
-	        if (state.flags & 0x0200) {
-	          //=== CRC2(state.check, hold);
-	          hbuf[0] = hold & 0xff;
-	          hbuf[1] = (hold >>> 8) & 0xff;
-	          state.check = crc32(state.check, hbuf, 2, 0);
-	          //===//
-	        }
-	        //=== INITBITS();
-	        hold = 0;
-	        bits = 0;
-	        //===//
-	        state.mode = EXLEN;
-	        /* falls through */
-	      case EXLEN:
-	        if (state.flags & 0x0400) {
-	          //=== NEEDBITS(16); */
-	          while (bits < 16) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          state.length = hold;
+	      }
+	      else if (state.head) {
+	        state.head.extra = null/*Z_NULL*/;
+	      }
+	      state.mode = EXTRA;
+	      /* falls through */
+	    case EXTRA:
+	      if (state.flags & 0x0400) {
+	        copy = state.length;
+	        if (copy > have) { copy = have; }
+	        if (copy) {
 	          if (state.head) {
-	            state.head.extra_len = hold;
+	            len = state.head.extra_len - state.length;
+	            if (!state.head.extra) {
+	              // Use untyped array for more conveniend processing later
+	              state.head.extra = new Array(state.head.extra_len);
+	            }
+	            utils.arraySet(
+	              state.head.extra,
+	              input,
+	              next,
+	              // extra field is limited to 65536 bytes
+	              // - no need for additional size check
+	              copy,
+	              /*len + copy > state.head.extra_max - len ? state.head.extra_max : copy,*/
+	              len
+	            );
+	            //zmemcpy(state.head.extra + len, next,
+	            //        len + copy > state.head.extra_max ?
+	            //        state.head.extra_max - len : copy);
 	          }
 	          if (state.flags & 0x0200) {
-	            //=== CRC2(state.check, hold);
-	            hbuf[0] = hold & 0xff;
-	            hbuf[1] = (hold >>> 8) & 0xff;
-	            state.check = crc32(state.check, hbuf, 2, 0);
-	            //===//
+	            state.check = crc32(state.check, input, copy, next);
 	          }
-	          //=== INITBITS();
-	          hold = 0;
-	          bits = 0;
-	          //===//
+	          have -= copy;
+	          next += copy;
+	          state.length -= copy;
 	        }
-	        else if (state.head) {
-	          state.head.extra = null/*Z_NULL*/;
-	        }
-	        state.mode = EXTRA;
-	        /* falls through */
-	      case EXTRA:
-	        if (state.flags & 0x0400) {
-	          copy = state.length;
-	          if (copy > have) { copy = have; }
-	          if (copy) {
-	            if (state.head) {
-	              len = state.head.extra_len - state.length;
-	              if (!state.head.extra) {
-	                // Use untyped array for more convenient processing later
-	                state.head.extra = new Array(state.head.extra_len);
-	              }
-	              utils.arraySet(
-	                state.head.extra,
-	                input,
-	                next,
-	                // extra field is limited to 65536 bytes
-	                // - no need for additional size check
-	                copy,
-	                /*len + copy > state.head.extra_max - len ? state.head.extra_max : copy,*/
-	                len
-	              );
-	              //zmemcpy(state.head.extra + len, next,
-	              //        len + copy > state.head.extra_max ?
-	              //        state.head.extra_max - len : copy);
-	            }
-	            if (state.flags & 0x0200) {
-	              state.check = crc32(state.check, input, copy, next);
-	            }
-	            have -= copy;
-	            next += copy;
-	            state.length -= copy;
+	        if (state.length) { break inf_leave; }
+	      }
+	      state.length = 0;
+	      state.mode = NAME;
+	      /* falls through */
+	    case NAME:
+	      if (state.flags & 0x0800) {
+	        if (have === 0) { break inf_leave; }
+	        copy = 0;
+	        do {
+	          // TODO: 2 or 1 bytes?
+	          len = input[next + copy++];
+	          /* use constant limit because in js we should not preallocate memory */
+	          if (state.head && len &&
+	              (state.length < 65536 /*state.head.name_max*/)) {
+	            state.head.name += String.fromCharCode(len);
 	          }
-	          if (state.length) { break inf_leave; }
-	        }
-	        state.length = 0;
-	        state.mode = NAME;
-	        /* falls through */
-	      case NAME:
-	        if (state.flags & 0x0800) {
-	          if (have === 0) { break inf_leave; }
-	          copy = 0;
-	          do {
-	            // TODO: 2 or 1 bytes?
-	            len = input[next + copy++];
-	            /* use constant limit because in js we should not preallocate memory */
-	            if (state.head && len &&
-	                (state.length < 65536 /*state.head.name_max*/)) {
-	              state.head.name += String.fromCharCode(len);
-	            }
-	          } while (len && copy < have);
+	        } while (len && copy < have);
 	
-	          if (state.flags & 0x0200) {
-	            state.check = crc32(state.check, input, copy, next);
-	          }
-	          have -= copy;
-	          next += copy;
-	          if (len) { break inf_leave; }
-	        }
-	        else if (state.head) {
-	          state.head.name = null;
-	        }
-	        state.length = 0;
-	        state.mode = COMMENT;
-	        /* falls through */
-	      case COMMENT:
-	        if (state.flags & 0x1000) {
-	          if (have === 0) { break inf_leave; }
-	          copy = 0;
-	          do {
-	            len = input[next + copy++];
-	            /* use constant limit because in js we should not preallocate memory */
-	            if (state.head && len &&
-	                (state.length < 65536 /*state.head.comm_max*/)) {
-	              state.head.comment += String.fromCharCode(len);
-	            }
-	          } while (len && copy < have);
-	          if (state.flags & 0x0200) {
-	            state.check = crc32(state.check, input, copy, next);
-	          }
-	          have -= copy;
-	          next += copy;
-	          if (len) { break inf_leave; }
-	        }
-	        else if (state.head) {
-	          state.head.comment = null;
-	        }
-	        state.mode = HCRC;
-	        /* falls through */
-	      case HCRC:
 	        if (state.flags & 0x0200) {
-	          //=== NEEDBITS(16); */
-	          while (bits < 16) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          if (hold !== (state.check & 0xffff)) {
-	            strm.msg = 'header crc mismatch';
-	            state.mode = BAD;
-	            break;
-	          }
-	          //=== INITBITS();
-	          hold = 0;
-	          bits = 0;
-	          //===//
+	          state.check = crc32(state.check, input, copy, next);
 	        }
-	        if (state.head) {
-	          state.head.hcrc = ((state.flags >> 9) & 1);
-	          state.head.done = true;
+	        have -= copy;
+	        next += copy;
+	        if (len) { break inf_leave; }
+	      }
+	      else if (state.head) {
+	        state.head.name = null;
+	      }
+	      state.length = 0;
+	      state.mode = COMMENT;
+	      /* falls through */
+	    case COMMENT:
+	      if (state.flags & 0x1000) {
+	        if (have === 0) { break inf_leave; }
+	        copy = 0;
+	        do {
+	          len = input[next + copy++];
+	          /* use constant limit because in js we should not preallocate memory */
+	          if (state.head && len &&
+	              (state.length < 65536 /*state.head.comm_max*/)) {
+	            state.head.comment += String.fromCharCode(len);
+	          }
+	        } while (len && copy < have);
+	        if (state.flags & 0x0200) {
+	          state.check = crc32(state.check, input, copy, next);
 	        }
-	        strm.adler = state.check = 0;
-	        state.mode = TYPE;
-	        break;
-	      case DICTID:
-	        //=== NEEDBITS(32); */
-	        while (bits < 32) {
+	        have -= copy;
+	        next += copy;
+	        if (len) { break inf_leave; }
+	      }
+	      else if (state.head) {
+	        state.head.comment = null;
+	      }
+	      state.mode = HCRC;
+	      /* falls through */
+	    case HCRC:
+	      if (state.flags & 0x0200) {
+	        //=== NEEDBITS(16); */
+	        while (bits < 16) {
 	          if (have === 0) { break inf_leave; }
 	          have--;
 	          hold += input[next++] << bits;
 	          bits += 8;
 	        }
 	        //===//
-	        strm.adler = state.check = zswap32(hold);
+	        if (hold !== (state.check & 0xffff)) {
+	          strm.msg = 'header crc mismatch';
+	          state.mode = BAD;
+	          break;
+	        }
 	        //=== INITBITS();
 	        hold = 0;
 	        bits = 0;
 	        //===//
-	        state.mode = DICT;
-	        /* falls through */
-	      case DICT:
-	        if (state.havedict === 0) {
-	          //--- RESTORE() ---
-	          strm.next_out = put;
-	          strm.avail_out = left;
-	          strm.next_in = next;
-	          strm.avail_in = have;
-	          state.hold = hold;
-	          state.bits = bits;
-	          //---
-	          return Z_NEED_DICT;
-	        }
-	        strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
-	        state.mode = TYPE;
-	        /* falls through */
-	      case TYPE:
-	        if (flush === Z_BLOCK || flush === Z_TREES) { break inf_leave; }
-	        /* falls through */
-	      case TYPEDO:
-	        if (state.last) {
-	          //--- BYTEBITS() ---//
-	          hold >>>= bits & 7;
-	          bits -= bits & 7;
+	      }
+	      if (state.head) {
+	        state.head.hcrc = ((state.flags >> 9) & 1);
+	        state.head.done = true;
+	      }
+	      strm.adler = state.check = 0;
+	      state.mode = TYPE;
+	      break;
+	    case DICTID:
+	      //=== NEEDBITS(32); */
+	      while (bits < 32) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      strm.adler = state.check = zswap32(hold);
+	      //=== INITBITS();
+	      hold = 0;
+	      bits = 0;
+	      //===//
+	      state.mode = DICT;
+	      /* falls through */
+	    case DICT:
+	      if (state.havedict === 0) {
+	        //--- RESTORE() ---
+	        strm.next_out = put;
+	        strm.avail_out = left;
+	        strm.next_in = next;
+	        strm.avail_in = have;
+	        state.hold = hold;
+	        state.bits = bits;
+	        //---
+	        return Z_NEED_DICT;
+	      }
+	      strm.adler = state.check = 1/*adler32(0L, Z_NULL, 0)*/;
+	      state.mode = TYPE;
+	      /* falls through */
+	    case TYPE:
+	      if (flush === Z_BLOCK || flush === Z_TREES) { break inf_leave; }
+	      /* falls through */
+	    case TYPEDO:
+	      if (state.last) {
+	        //--- BYTEBITS() ---//
+	        hold >>>= bits & 7;
+	        bits -= bits & 7;
+	        //---//
+	        state.mode = CHECK;
+	        break;
+	      }
+	      //=== NEEDBITS(3); */
+	      while (bits < 3) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      state.last = (hold & 0x01)/*BITS(1)*/;
+	      //--- DROPBITS(1) ---//
+	      hold >>>= 1;
+	      bits -= 1;
+	      //---//
+	
+	      switch ((hold & 0x03)/*BITS(2)*/) {
+	      case 0:                             /* stored block */
+	        //Tracev((stderr, "inflate:     stored block%s\n",
+	        //        state.last ? " (last)" : ""));
+	        state.mode = STORED;
+	        break;
+	      case 1:                             /* fixed block */
+	        fixedtables(state);
+	        //Tracev((stderr, "inflate:     fixed codes block%s\n",
+	        //        state.last ? " (last)" : ""));
+	        state.mode = LEN_;             /* decode codes */
+	        if (flush === Z_TREES) {
+	          //--- DROPBITS(2) ---//
+	          hold >>>= 2;
+	          bits -= 2;
 	          //---//
-	          state.mode = CHECK;
-	          break;
+	          break inf_leave;
 	        }
-	        //=== NEEDBITS(3); */
+	        break;
+	      case 2:                             /* dynamic block */
+	        //Tracev((stderr, "inflate:     dynamic codes block%s\n",
+	        //        state.last ? " (last)" : ""));
+	        state.mode = TABLE;
+	        break;
+	      case 3:
+	        strm.msg = 'invalid block type';
+	        state.mode = BAD;
+	      }
+	      //--- DROPBITS(2) ---//
+	      hold >>>= 2;
+	      bits -= 2;
+	      //---//
+	      break;
+	    case STORED:
+	      //--- BYTEBITS() ---// /* go to byte boundary */
+	      hold >>>= bits & 7;
+	      bits -= bits & 7;
+	      //---//
+	      //=== NEEDBITS(32); */
+	      while (bits < 32) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      if ((hold & 0xffff) !== ((hold >>> 16) ^ 0xffff)) {
+	        strm.msg = 'invalid stored block lengths';
+	        state.mode = BAD;
+	        break;
+	      }
+	      state.length = hold & 0xffff;
+	      //Tracev((stderr, "inflate:       stored length %u\n",
+	      //        state.length));
+	      //=== INITBITS();
+	      hold = 0;
+	      bits = 0;
+	      //===//
+	      state.mode = COPY_;
+	      if (flush === Z_TREES) { break inf_leave; }
+	      /* falls through */
+	    case COPY_:
+	      state.mode = COPY;
+	      /* falls through */
+	    case COPY:
+	      copy = state.length;
+	      if (copy) {
+	        if (copy > have) { copy = have; }
+	        if (copy > left) { copy = left; }
+	        if (copy === 0) { break inf_leave; }
+	        //--- zmemcpy(put, next, copy); ---
+	        utils.arraySet(output, input, next, copy, put);
+	        //---//
+	        have -= copy;
+	        next += copy;
+	        left -= copy;
+	        put += copy;
+	        state.length -= copy;
+	        break;
+	      }
+	      //Tracev((stderr, "inflate:       stored end\n"));
+	      state.mode = TYPE;
+	      break;
+	    case TABLE:
+	      //=== NEEDBITS(14); */
+	      while (bits < 14) {
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	      }
+	      //===//
+	      state.nlen = (hold & 0x1f)/*BITS(5)*/ + 257;
+	      //--- DROPBITS(5) ---//
+	      hold >>>= 5;
+	      bits -= 5;
+	      //---//
+	      state.ndist = (hold & 0x1f)/*BITS(5)*/ + 1;
+	      //--- DROPBITS(5) ---//
+	      hold >>>= 5;
+	      bits -= 5;
+	      //---//
+	      state.ncode = (hold & 0x0f)/*BITS(4)*/ + 4;
+	      //--- DROPBITS(4) ---//
+	      hold >>>= 4;
+	      bits -= 4;
+	      //---//
+	//#ifndef PKZIP_BUG_WORKAROUND
+	      if (state.nlen > 286 || state.ndist > 30) {
+	        strm.msg = 'too many length or distance symbols';
+	        state.mode = BAD;
+	        break;
+	      }
+	//#endif
+	      //Tracev((stderr, "inflate:       table sizes ok\n"));
+	      state.have = 0;
+	      state.mode = LENLENS;
+	      /* falls through */
+	    case LENLENS:
+	      while (state.have < state.ncode) {
+	        //=== NEEDBITS(3);
 	        while (bits < 3) {
 	          if (have === 0) { break inf_leave; }
 	          have--;
@@ -43246,442 +43368,39 @@
 	          bits += 8;
 	        }
 	        //===//
-	        state.last = (hold & 0x01)/*BITS(1)*/;
-	        //--- DROPBITS(1) ---//
-	        hold >>>= 1;
-	        bits -= 1;
+	        state.lens[order[state.have++]] = (hold & 0x07);//BITS(3);
+	        //--- DROPBITS(3) ---//
+	        hold >>>= 3;
+	        bits -= 3;
 	        //---//
+	      }
+	      while (state.have < 19) {
+	        state.lens[order[state.have++]] = 0;
+	      }
+	      // We have separate tables & no pointers. 2 commented lines below not needed.
+	      //state.next = state.codes;
+	      //state.lencode = state.next;
+	      // Switch to use dynamic table
+	      state.lencode = state.lendyn;
+	      state.lenbits = 7;
 	
-	        switch ((hold & 0x03)/*BITS(2)*/) {
-	          case 0:                             /* stored block */
-	            //Tracev((stderr, "inflate:     stored block%s\n",
-	            //        state.last ? " (last)" : ""));
-	            state.mode = STORED;
-	            break;
-	          case 1:                             /* fixed block */
-	            fixedtables(state);
-	            //Tracev((stderr, "inflate:     fixed codes block%s\n",
-	            //        state.last ? " (last)" : ""));
-	            state.mode = LEN_;             /* decode codes */
-	            if (flush === Z_TREES) {
-	              //--- DROPBITS(2) ---//
-	              hold >>>= 2;
-	              bits -= 2;
-	              //---//
-	              break inf_leave;
-	            }
-	            break;
-	          case 2:                             /* dynamic block */
-	            //Tracev((stderr, "inflate:     dynamic codes block%s\n",
-	            //        state.last ? " (last)" : ""));
-	            state.mode = TABLE;
-	            break;
-	          case 3:
-	            strm.msg = 'invalid block type';
-	            state.mode = BAD;
-	        }
-	        //--- DROPBITS(2) ---//
-	        hold >>>= 2;
-	        bits -= 2;
-	        //---//
+	      opts = { bits: state.lenbits };
+	      ret = inflate_table(CODES, state.lens, 0, 19, state.lencode, 0, state.work, opts);
+	      state.lenbits = opts.bits;
+	
+	      if (ret) {
+	        strm.msg = 'invalid code lengths set';
+	        state.mode = BAD;
 	        break;
-	      case STORED:
-	        //--- BYTEBITS() ---// /* go to byte boundary */
-	        hold >>>= bits & 7;
-	        bits -= bits & 7;
-	        //---//
-	        //=== NEEDBITS(32); */
-	        while (bits < 32) {
-	          if (have === 0) { break inf_leave; }
-	          have--;
-	          hold += input[next++] << bits;
-	          bits += 8;
-	        }
-	        //===//
-	        if ((hold & 0xffff) !== ((hold >>> 16) ^ 0xffff)) {
-	          strm.msg = 'invalid stored block lengths';
-	          state.mode = BAD;
-	          break;
-	        }
-	        state.length = hold & 0xffff;
-	        //Tracev((stderr, "inflate:       stored length %u\n",
-	        //        state.length));
-	        //=== INITBITS();
-	        hold = 0;
-	        bits = 0;
-	        //===//
-	        state.mode = COPY_;
-	        if (flush === Z_TREES) { break inf_leave; }
-	        /* falls through */
-	      case COPY_:
-	        state.mode = COPY;
-	        /* falls through */
-	      case COPY:
-	        copy = state.length;
-	        if (copy) {
-	          if (copy > have) { copy = have; }
-	          if (copy > left) { copy = left; }
-	          if (copy === 0) { break inf_leave; }
-	          //--- zmemcpy(put, next, copy); ---
-	          utils.arraySet(output, input, next, copy, put);
-	          //---//
-	          have -= copy;
-	          next += copy;
-	          left -= copy;
-	          put += copy;
-	          state.length -= copy;
-	          break;
-	        }
-	        //Tracev((stderr, "inflate:       stored end\n"));
-	        state.mode = TYPE;
-	        break;
-	      case TABLE:
-	        //=== NEEDBITS(14); */
-	        while (bits < 14) {
-	          if (have === 0) { break inf_leave; }
-	          have--;
-	          hold += input[next++] << bits;
-	          bits += 8;
-	        }
-	        //===//
-	        state.nlen = (hold & 0x1f)/*BITS(5)*/ + 257;
-	        //--- DROPBITS(5) ---//
-	        hold >>>= 5;
-	        bits -= 5;
-	        //---//
-	        state.ndist = (hold & 0x1f)/*BITS(5)*/ + 1;
-	        //--- DROPBITS(5) ---//
-	        hold >>>= 5;
-	        bits -= 5;
-	        //---//
-	        state.ncode = (hold & 0x0f)/*BITS(4)*/ + 4;
-	        //--- DROPBITS(4) ---//
-	        hold >>>= 4;
-	        bits -= 4;
-	        //---//
-	//#ifndef PKZIP_BUG_WORKAROUND
-	        if (state.nlen > 286 || state.ndist > 30) {
-	          strm.msg = 'too many length or distance symbols';
-	          state.mode = BAD;
-	          break;
-	        }
-	//#endif
-	        //Tracev((stderr, "inflate:       table sizes ok\n"));
-	        state.have = 0;
-	        state.mode = LENLENS;
-	        /* falls through */
-	      case LENLENS:
-	        while (state.have < state.ncode) {
-	          //=== NEEDBITS(3);
-	          while (bits < 3) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          state.lens[order[state.have++]] = (hold & 0x07);//BITS(3);
-	          //--- DROPBITS(3) ---//
-	          hold >>>= 3;
-	          bits -= 3;
-	          //---//
-	        }
-	        while (state.have < 19) {
-	          state.lens[order[state.have++]] = 0;
-	        }
-	        // We have separate tables & no pointers. 2 commented lines below not needed.
-	        //state.next = state.codes;
-	        //state.lencode = state.next;
-	        // Switch to use dynamic table
-	        state.lencode = state.lendyn;
-	        state.lenbits = 7;
-	
-	        opts = { bits: state.lenbits };
-	        ret = inflate_table(CODES, state.lens, 0, 19, state.lencode, 0, state.work, opts);
-	        state.lenbits = opts.bits;
-	
-	        if (ret) {
-	          strm.msg = 'invalid code lengths set';
-	          state.mode = BAD;
-	          break;
-	        }
-	        //Tracev((stderr, "inflate:       code lengths ok\n"));
-	        state.have = 0;
-	        state.mode = CODELENS;
-	        /* falls through */
-	      case CODELENS:
-	        while (state.have < state.nlen + state.ndist) {
-	          for (;;) {
-	            here = state.lencode[hold & ((1 << state.lenbits) - 1)];/*BITS(state.lenbits)*/
-	            here_bits = here >>> 24;
-	            here_op = (here >>> 16) & 0xff;
-	            here_val = here & 0xffff;
-	
-	            if ((here_bits) <= bits) { break; }
-	            //--- PULLBYTE() ---//
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	            //---//
-	          }
-	          if (here_val < 16) {
-	            //--- DROPBITS(here.bits) ---//
-	            hold >>>= here_bits;
-	            bits -= here_bits;
-	            //---//
-	            state.lens[state.have++] = here_val;
-	          }
-	          else {
-	            if (here_val === 16) {
-	              //=== NEEDBITS(here.bits + 2);
-	              n = here_bits + 2;
-	              while (bits < n) {
-	                if (have === 0) { break inf_leave; }
-	                have--;
-	                hold += input[next++] << bits;
-	                bits += 8;
-	              }
-	              //===//
-	              //--- DROPBITS(here.bits) ---//
-	              hold >>>= here_bits;
-	              bits -= here_bits;
-	              //---//
-	              if (state.have === 0) {
-	                strm.msg = 'invalid bit length repeat';
-	                state.mode = BAD;
-	                break;
-	              }
-	              len = state.lens[state.have - 1];
-	              copy = 3 + (hold & 0x03);//BITS(2);
-	              //--- DROPBITS(2) ---//
-	              hold >>>= 2;
-	              bits -= 2;
-	              //---//
-	            }
-	            else if (here_val === 17) {
-	              //=== NEEDBITS(here.bits + 3);
-	              n = here_bits + 3;
-	              while (bits < n) {
-	                if (have === 0) { break inf_leave; }
-	                have--;
-	                hold += input[next++] << bits;
-	                bits += 8;
-	              }
-	              //===//
-	              //--- DROPBITS(here.bits) ---//
-	              hold >>>= here_bits;
-	              bits -= here_bits;
-	              //---//
-	              len = 0;
-	              copy = 3 + (hold & 0x07);//BITS(3);
-	              //--- DROPBITS(3) ---//
-	              hold >>>= 3;
-	              bits -= 3;
-	              //---//
-	            }
-	            else {
-	              //=== NEEDBITS(here.bits + 7);
-	              n = here_bits + 7;
-	              while (bits < n) {
-	                if (have === 0) { break inf_leave; }
-	                have--;
-	                hold += input[next++] << bits;
-	                bits += 8;
-	              }
-	              //===//
-	              //--- DROPBITS(here.bits) ---//
-	              hold >>>= here_bits;
-	              bits -= here_bits;
-	              //---//
-	              len = 0;
-	              copy = 11 + (hold & 0x7f);//BITS(7);
-	              //--- DROPBITS(7) ---//
-	              hold >>>= 7;
-	              bits -= 7;
-	              //---//
-	            }
-	            if (state.have + copy > state.nlen + state.ndist) {
-	              strm.msg = 'invalid bit length repeat';
-	              state.mode = BAD;
-	              break;
-	            }
-	            while (copy--) {
-	              state.lens[state.have++] = len;
-	            }
-	          }
-	        }
-	
-	        /* handle error breaks in while */
-	        if (state.mode === BAD) { break; }
-	
-	        /* check for end-of-block code (better have one) */
-	        if (state.lens[256] === 0) {
-	          strm.msg = 'invalid code -- missing end-of-block';
-	          state.mode = BAD;
-	          break;
-	        }
-	
-	        /* build code tables -- note: do not change the lenbits or distbits
-	           values here (9 and 6) without reading the comments in inftrees.h
-	           concerning the ENOUGH constants, which depend on those values */
-	        state.lenbits = 9;
-	
-	        opts = { bits: state.lenbits };
-	        ret = inflate_table(LENS, state.lens, 0, state.nlen, state.lencode, 0, state.work, opts);
-	        // We have separate tables & no pointers. 2 commented lines below not needed.
-	        // state.next_index = opts.table_index;
-	        state.lenbits = opts.bits;
-	        // state.lencode = state.next;
-	
-	        if (ret) {
-	          strm.msg = 'invalid literal/lengths set';
-	          state.mode = BAD;
-	          break;
-	        }
-	
-	        state.distbits = 6;
-	        //state.distcode.copy(state.codes);
-	        // Switch to use dynamic table
-	        state.distcode = state.distdyn;
-	        opts = { bits: state.distbits };
-	        ret = inflate_table(DISTS, state.lens, state.nlen, state.ndist, state.distcode, 0, state.work, opts);
-	        // We have separate tables & no pointers. 2 commented lines below not needed.
-	        // state.next_index = opts.table_index;
-	        state.distbits = opts.bits;
-	        // state.distcode = state.next;
-	
-	        if (ret) {
-	          strm.msg = 'invalid distances set';
-	          state.mode = BAD;
-	          break;
-	        }
-	        //Tracev((stderr, 'inflate:       codes ok\n'));
-	        state.mode = LEN_;
-	        if (flush === Z_TREES) { break inf_leave; }
-	        /* falls through */
-	      case LEN_:
-	        state.mode = LEN;
-	        /* falls through */
-	      case LEN:
-	        if (have >= 6 && left >= 258) {
-	          //--- RESTORE() ---
-	          strm.next_out = put;
-	          strm.avail_out = left;
-	          strm.next_in = next;
-	          strm.avail_in = have;
-	          state.hold = hold;
-	          state.bits = bits;
-	          //---
-	          inflate_fast(strm, _out);
-	          //--- LOAD() ---
-	          put = strm.next_out;
-	          output = strm.output;
-	          left = strm.avail_out;
-	          next = strm.next_in;
-	          input = strm.input;
-	          have = strm.avail_in;
-	          hold = state.hold;
-	          bits = state.bits;
-	          //---
-	
-	          if (state.mode === TYPE) {
-	            state.back = -1;
-	          }
-	          break;
-	        }
-	        state.back = 0;
+	      }
+	      //Tracev((stderr, "inflate:       code lengths ok\n"));
+	      state.have = 0;
+	      state.mode = CODELENS;
+	      /* falls through */
+	    case CODELENS:
+	      while (state.have < state.nlen + state.ndist) {
 	        for (;;) {
-	          here = state.lencode[hold & ((1 << state.lenbits) - 1)];  /*BITS(state.lenbits)*/
-	          here_bits = here >>> 24;
-	          here_op = (here >>> 16) & 0xff;
-	          here_val = here & 0xffff;
-	
-	          if (here_bits <= bits) { break; }
-	          //--- PULLBYTE() ---//
-	          if (have === 0) { break inf_leave; }
-	          have--;
-	          hold += input[next++] << bits;
-	          bits += 8;
-	          //---//
-	        }
-	        if (here_op && (here_op & 0xf0) === 0) {
-	          last_bits = here_bits;
-	          last_op = here_op;
-	          last_val = here_val;
-	          for (;;) {
-	            here = state.lencode[last_val +
-	                    ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
-	            here_bits = here >>> 24;
-	            here_op = (here >>> 16) & 0xff;
-	            here_val = here & 0xffff;
-	
-	            if ((last_bits + here_bits) <= bits) { break; }
-	            //--- PULLBYTE() ---//
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	            //---//
-	          }
-	          //--- DROPBITS(last.bits) ---//
-	          hold >>>= last_bits;
-	          bits -= last_bits;
-	          //---//
-	          state.back += last_bits;
-	        }
-	        //--- DROPBITS(here.bits) ---//
-	        hold >>>= here_bits;
-	        bits -= here_bits;
-	        //---//
-	        state.back += here_bits;
-	        state.length = here_val;
-	        if (here_op === 0) {
-	          //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
-	          //        "inflate:         literal '%c'\n" :
-	          //        "inflate:         literal 0x%02x\n", here.val));
-	          state.mode = LIT;
-	          break;
-	        }
-	        if (here_op & 32) {
-	          //Tracevv((stderr, "inflate:         end of block\n"));
-	          state.back = -1;
-	          state.mode = TYPE;
-	          break;
-	        }
-	        if (here_op & 64) {
-	          strm.msg = 'invalid literal/length code';
-	          state.mode = BAD;
-	          break;
-	        }
-	        state.extra = here_op & 15;
-	        state.mode = LENEXT;
-	        /* falls through */
-	      case LENEXT:
-	        if (state.extra) {
-	          //=== NEEDBITS(state.extra);
-	          n = state.extra;
-	          while (bits < n) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          state.length += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
-	          //--- DROPBITS(state.extra) ---//
-	          hold >>>= state.extra;
-	          bits -= state.extra;
-	          //---//
-	          state.back += state.extra;
-	        }
-	        //Tracevv((stderr, "inflate:         length %u\n", state.length));
-	        state.was = state.length;
-	        state.mode = DIST;
-	        /* falls through */
-	      case DIST:
-	        for (;;) {
-	          here = state.distcode[hold & ((1 << state.distbits) - 1)];/*BITS(state.distbits)*/
+	          here = state.lencode[hold & ((1 << state.lenbits) - 1)];/*BITS(state.lenbits)*/
 	          here_bits = here >>> 24;
 	          here_op = (here >>> 16) & 0xff;
 	          here_val = here & 0xffff;
@@ -43694,85 +43413,354 @@
 	          bits += 8;
 	          //---//
 	        }
-	        if ((here_op & 0xf0) === 0) {
-	          last_bits = here_bits;
-	          last_op = here_op;
-	          last_val = here_val;
-	          for (;;) {
-	            here = state.distcode[last_val +
-	                    ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
-	            here_bits = here >>> 24;
-	            here_op = (here >>> 16) & 0xff;
-	            here_val = here & 0xffff;
-	
-	            if ((last_bits + here_bits) <= bits) { break; }
-	            //--- PULLBYTE() ---//
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
+	        if (here_val < 16) {
+	          //--- DROPBITS(here.bits) ---//
+	          hold >>>= here_bits;
+	          bits -= here_bits;
+	          //---//
+	          state.lens[state.have++] = here_val;
+	        }
+	        else {
+	          if (here_val === 16) {
+	            //=== NEEDBITS(here.bits + 2);
+	            n = here_bits + 2;
+	            while (bits < n) {
+	              if (have === 0) { break inf_leave; }
+	              have--;
+	              hold += input[next++] << bits;
+	              bits += 8;
+	            }
+	            //===//
+	            //--- DROPBITS(here.bits) ---//
+	            hold >>>= here_bits;
+	            bits -= here_bits;
 	            //---//
-	          }
-	          //--- DROPBITS(last.bits) ---//
-	          hold >>>= last_bits;
-	          bits -= last_bits;
-	          //---//
-	          state.back += last_bits;
-	        }
-	        //--- DROPBITS(here.bits) ---//
-	        hold >>>= here_bits;
-	        bits -= here_bits;
-	        //---//
-	        state.back += here_bits;
-	        if (here_op & 64) {
-	          strm.msg = 'invalid distance code';
-	          state.mode = BAD;
-	          break;
-	        }
-	        state.offset = here_val;
-	        state.extra = (here_op) & 15;
-	        state.mode = DISTEXT;
-	        /* falls through */
-	      case DISTEXT:
-	        if (state.extra) {
-	          //=== NEEDBITS(state.extra);
-	          n = state.extra;
-	          while (bits < n) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          state.offset += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
-	          //--- DROPBITS(state.extra) ---//
-	          hold >>>= state.extra;
-	          bits -= state.extra;
-	          //---//
-	          state.back += state.extra;
-	        }
-	//#ifdef INFLATE_STRICT
-	        if (state.offset > state.dmax) {
-	          strm.msg = 'invalid distance too far back';
-	          state.mode = BAD;
-	          break;
-	        }
-	//#endif
-	        //Tracevv((stderr, "inflate:         distance %u\n", state.offset));
-	        state.mode = MATCH;
-	        /* falls through */
-	      case MATCH:
-	        if (left === 0) { break inf_leave; }
-	        copy = _out - left;
-	        if (state.offset > copy) {         /* copy from window */
-	          copy = state.offset - copy;
-	          if (copy > state.whave) {
-	            if (state.sane) {
-	              strm.msg = 'invalid distance too far back';
+	            if (state.have === 0) {
+	              strm.msg = 'invalid bit length repeat';
 	              state.mode = BAD;
 	              break;
 	            }
-	// (!) This block is disabled in zlib defaults,
+	            len = state.lens[state.have - 1];
+	            copy = 3 + (hold & 0x03);//BITS(2);
+	            //--- DROPBITS(2) ---//
+	            hold >>>= 2;
+	            bits -= 2;
+	            //---//
+	          }
+	          else if (here_val === 17) {
+	            //=== NEEDBITS(here.bits + 3);
+	            n = here_bits + 3;
+	            while (bits < n) {
+	              if (have === 0) { break inf_leave; }
+	              have--;
+	              hold += input[next++] << bits;
+	              bits += 8;
+	            }
+	            //===//
+	            //--- DROPBITS(here.bits) ---//
+	            hold >>>= here_bits;
+	            bits -= here_bits;
+	            //---//
+	            len = 0;
+	            copy = 3 + (hold & 0x07);//BITS(3);
+	            //--- DROPBITS(3) ---//
+	            hold >>>= 3;
+	            bits -= 3;
+	            //---//
+	          }
+	          else {
+	            //=== NEEDBITS(here.bits + 7);
+	            n = here_bits + 7;
+	            while (bits < n) {
+	              if (have === 0) { break inf_leave; }
+	              have--;
+	              hold += input[next++] << bits;
+	              bits += 8;
+	            }
+	            //===//
+	            //--- DROPBITS(here.bits) ---//
+	            hold >>>= here_bits;
+	            bits -= here_bits;
+	            //---//
+	            len = 0;
+	            copy = 11 + (hold & 0x7f);//BITS(7);
+	            //--- DROPBITS(7) ---//
+	            hold >>>= 7;
+	            bits -= 7;
+	            //---//
+	          }
+	          if (state.have + copy > state.nlen + state.ndist) {
+	            strm.msg = 'invalid bit length repeat';
+	            state.mode = BAD;
+	            break;
+	          }
+	          while (copy--) {
+	            state.lens[state.have++] = len;
+	          }
+	        }
+	      }
+	
+	      /* handle error breaks in while */
+	      if (state.mode === BAD) { break; }
+	
+	      /* check for end-of-block code (better have one) */
+	      if (state.lens[256] === 0) {
+	        strm.msg = 'invalid code -- missing end-of-block';
+	        state.mode = BAD;
+	        break;
+	      }
+	
+	      /* build code tables -- note: do not change the lenbits or distbits
+	         values here (9 and 6) without reading the comments in inftrees.h
+	         concerning the ENOUGH constants, which depend on those values */
+	      state.lenbits = 9;
+	
+	      opts = { bits: state.lenbits };
+	      ret = inflate_table(LENS, state.lens, 0, state.nlen, state.lencode, 0, state.work, opts);
+	      // We have separate tables & no pointers. 2 commented lines below not needed.
+	      // state.next_index = opts.table_index;
+	      state.lenbits = opts.bits;
+	      // state.lencode = state.next;
+	
+	      if (ret) {
+	        strm.msg = 'invalid literal/lengths set';
+	        state.mode = BAD;
+	        break;
+	      }
+	
+	      state.distbits = 6;
+	      //state.distcode.copy(state.codes);
+	      // Switch to use dynamic table
+	      state.distcode = state.distdyn;
+	      opts = { bits: state.distbits };
+	      ret = inflate_table(DISTS, state.lens, state.nlen, state.ndist, state.distcode, 0, state.work, opts);
+	      // We have separate tables & no pointers. 2 commented lines below not needed.
+	      // state.next_index = opts.table_index;
+	      state.distbits = opts.bits;
+	      // state.distcode = state.next;
+	
+	      if (ret) {
+	        strm.msg = 'invalid distances set';
+	        state.mode = BAD;
+	        break;
+	      }
+	      //Tracev((stderr, 'inflate:       codes ok\n'));
+	      state.mode = LEN_;
+	      if (flush === Z_TREES) { break inf_leave; }
+	      /* falls through */
+	    case LEN_:
+	      state.mode = LEN;
+	      /* falls through */
+	    case LEN:
+	      if (have >= 6 && left >= 258) {
+	        //--- RESTORE() ---
+	        strm.next_out = put;
+	        strm.avail_out = left;
+	        strm.next_in = next;
+	        strm.avail_in = have;
+	        state.hold = hold;
+	        state.bits = bits;
+	        //---
+	        inflate_fast(strm, _out);
+	        //--- LOAD() ---
+	        put = strm.next_out;
+	        output = strm.output;
+	        left = strm.avail_out;
+	        next = strm.next_in;
+	        input = strm.input;
+	        have = strm.avail_in;
+	        hold = state.hold;
+	        bits = state.bits;
+	        //---
+	
+	        if (state.mode === TYPE) {
+	          state.back = -1;
+	        }
+	        break;
+	      }
+	      state.back = 0;
+	      for (;;) {
+	        here = state.lencode[hold & ((1 << state.lenbits) - 1)];  /*BITS(state.lenbits)*/
+	        here_bits = here >>> 24;
+	        here_op = (here >>> 16) & 0xff;
+	        here_val = here & 0xffff;
+	
+	        if (here_bits <= bits) { break; }
+	        //--- PULLBYTE() ---//
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	        //---//
+	      }
+	      if (here_op && (here_op & 0xf0) === 0) {
+	        last_bits = here_bits;
+	        last_op = here_op;
+	        last_val = here_val;
+	        for (;;) {
+	          here = state.lencode[last_val +
+	                  ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
+	          here_bits = here >>> 24;
+	          here_op = (here >>> 16) & 0xff;
+	          here_val = here & 0xffff;
+	
+	          if ((last_bits + here_bits) <= bits) { break; }
+	          //--- PULLBYTE() ---//
+	          if (have === 0) { break inf_leave; }
+	          have--;
+	          hold += input[next++] << bits;
+	          bits += 8;
+	          //---//
+	        }
+	        //--- DROPBITS(last.bits) ---//
+	        hold >>>= last_bits;
+	        bits -= last_bits;
+	        //---//
+	        state.back += last_bits;
+	      }
+	      //--- DROPBITS(here.bits) ---//
+	      hold >>>= here_bits;
+	      bits -= here_bits;
+	      //---//
+	      state.back += here_bits;
+	      state.length = here_val;
+	      if (here_op === 0) {
+	        //Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
+	        //        "inflate:         literal '%c'\n" :
+	        //        "inflate:         literal 0x%02x\n", here.val));
+	        state.mode = LIT;
+	        break;
+	      }
+	      if (here_op & 32) {
+	        //Tracevv((stderr, "inflate:         end of block\n"));
+	        state.back = -1;
+	        state.mode = TYPE;
+	        break;
+	      }
+	      if (here_op & 64) {
+	        strm.msg = 'invalid literal/length code';
+	        state.mode = BAD;
+	        break;
+	      }
+	      state.extra = here_op & 15;
+	      state.mode = LENEXT;
+	      /* falls through */
+	    case LENEXT:
+	      if (state.extra) {
+	        //=== NEEDBITS(state.extra);
+	        n = state.extra;
+	        while (bits < n) {
+	          if (have === 0) { break inf_leave; }
+	          have--;
+	          hold += input[next++] << bits;
+	          bits += 8;
+	        }
+	        //===//
+	        state.length += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
+	        //--- DROPBITS(state.extra) ---//
+	        hold >>>= state.extra;
+	        bits -= state.extra;
+	        //---//
+	        state.back += state.extra;
+	      }
+	      //Tracevv((stderr, "inflate:         length %u\n", state.length));
+	      state.was = state.length;
+	      state.mode = DIST;
+	      /* falls through */
+	    case DIST:
+	      for (;;) {
+	        here = state.distcode[hold & ((1 << state.distbits) - 1)];/*BITS(state.distbits)*/
+	        here_bits = here >>> 24;
+	        here_op = (here >>> 16) & 0xff;
+	        here_val = here & 0xffff;
+	
+	        if ((here_bits) <= bits) { break; }
+	        //--- PULLBYTE() ---//
+	        if (have === 0) { break inf_leave; }
+	        have--;
+	        hold += input[next++] << bits;
+	        bits += 8;
+	        //---//
+	      }
+	      if ((here_op & 0xf0) === 0) {
+	        last_bits = here_bits;
+	        last_op = here_op;
+	        last_val = here_val;
+	        for (;;) {
+	          here = state.distcode[last_val +
+	                  ((hold & ((1 << (last_bits + last_op)) - 1))/*BITS(last.bits + last.op)*/ >> last_bits)];
+	          here_bits = here >>> 24;
+	          here_op = (here >>> 16) & 0xff;
+	          here_val = here & 0xffff;
+	
+	          if ((last_bits + here_bits) <= bits) { break; }
+	          //--- PULLBYTE() ---//
+	          if (have === 0) { break inf_leave; }
+	          have--;
+	          hold += input[next++] << bits;
+	          bits += 8;
+	          //---//
+	        }
+	        //--- DROPBITS(last.bits) ---//
+	        hold >>>= last_bits;
+	        bits -= last_bits;
+	        //---//
+	        state.back += last_bits;
+	      }
+	      //--- DROPBITS(here.bits) ---//
+	      hold >>>= here_bits;
+	      bits -= here_bits;
+	      //---//
+	      state.back += here_bits;
+	      if (here_op & 64) {
+	        strm.msg = 'invalid distance code';
+	        state.mode = BAD;
+	        break;
+	      }
+	      state.offset = here_val;
+	      state.extra = (here_op) & 15;
+	      state.mode = DISTEXT;
+	      /* falls through */
+	    case DISTEXT:
+	      if (state.extra) {
+	        //=== NEEDBITS(state.extra);
+	        n = state.extra;
+	        while (bits < n) {
+	          if (have === 0) { break inf_leave; }
+	          have--;
+	          hold += input[next++] << bits;
+	          bits += 8;
+	        }
+	        //===//
+	        state.offset += hold & ((1 << state.extra) - 1)/*BITS(state.extra)*/;
+	        //--- DROPBITS(state.extra) ---//
+	        hold >>>= state.extra;
+	        bits -= state.extra;
+	        //---//
+	        state.back += state.extra;
+	      }
+	//#ifdef INFLATE_STRICT
+	      if (state.offset > state.dmax) {
+	        strm.msg = 'invalid distance too far back';
+	        state.mode = BAD;
+	        break;
+	      }
+	//#endif
+	      //Tracevv((stderr, "inflate:         distance %u\n", state.offset));
+	      state.mode = MATCH;
+	      /* falls through */
+	    case MATCH:
+	      if (left === 0) { break inf_leave; }
+	      copy = _out - left;
+	      if (state.offset > copy) {         /* copy from window */
+	        copy = state.offset - copy;
+	        if (copy > state.whave) {
+	          if (state.sane) {
+	            strm.msg = 'invalid distance too far back';
+	            state.mode = BAD;
+	            break;
+	          }
+	// (!) This block is disabled in zlib defailts,
 	// don't enable it for binary compatibility
 	//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
 	//          Trace((stderr, "inflate.c too far\n"));
@@ -43787,106 +43775,106 @@
 	//          if (state.length === 0) { state.mode = LEN; }
 	//          break;
 	//#endif
-	          }
-	          if (copy > state.wnext) {
-	            copy -= state.wnext;
-	            from = state.wsize - copy;
-	          }
-	          else {
-	            from = state.wnext - copy;
-	          }
-	          if (copy > state.length) { copy = state.length; }
-	          from_source = state.window;
 	        }
-	        else {                              /* copy from output */
-	          from_source = output;
-	          from = put - state.offset;
-	          copy = state.length;
+	        if (copy > state.wnext) {
+	          copy -= state.wnext;
+	          from = state.wsize - copy;
 	        }
-	        if (copy > left) { copy = left; }
-	        left -= copy;
-	        state.length -= copy;
-	        do {
-	          output[put++] = from_source[from++];
-	        } while (--copy);
-	        if (state.length === 0) { state.mode = LEN; }
-	        break;
-	      case LIT:
-	        if (left === 0) { break inf_leave; }
-	        output[put++] = state.length;
-	        left--;
-	        state.mode = LEN;
-	        break;
-	      case CHECK:
-	        if (state.wrap) {
-	          //=== NEEDBITS(32);
-	          while (bits < 32) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            // Use '|' instead of '+' to make sure that result is signed
-	            hold |= input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          _out -= left;
-	          strm.total_out += _out;
-	          state.total += _out;
-	          if (_out) {
-	            strm.adler = state.check =
-	                /*UPDATE(state.check, put - _out, _out);*/
-	                (state.flags ? crc32(state.check, output, _out, put - _out) : adler32(state.check, output, _out, put - _out));
+	        else {
+	          from = state.wnext - copy;
+	        }
+	        if (copy > state.length) { copy = state.length; }
+	        from_source = state.window;
+	      }
+	      else {                              /* copy from output */
+	        from_source = output;
+	        from = put - state.offset;
+	        copy = state.length;
+	      }
+	      if (copy > left) { copy = left; }
+	      left -= copy;
+	      state.length -= copy;
+	      do {
+	        output[put++] = from_source[from++];
+	      } while (--copy);
+	      if (state.length === 0) { state.mode = LEN; }
+	      break;
+	    case LIT:
+	      if (left === 0) { break inf_leave; }
+	      output[put++] = state.length;
+	      left--;
+	      state.mode = LEN;
+	      break;
+	    case CHECK:
+	      if (state.wrap) {
+	        //=== NEEDBITS(32);
+	        while (bits < 32) {
+	          if (have === 0) { break inf_leave; }
+	          have--;
+	          // Use '|' insdead of '+' to make sure that result is signed
+	          hold |= input[next++] << bits;
+	          bits += 8;
+	        }
+	        //===//
+	        _out -= left;
+	        strm.total_out += _out;
+	        state.total += _out;
+	        if (_out) {
+	          strm.adler = state.check =
+	              /*UPDATE(state.check, put - _out, _out);*/
+	              (state.flags ? crc32(state.check, output, _out, put - _out) : adler32(state.check, output, _out, put - _out));
 	
-	          }
-	          _out = left;
-	          // NB: crc32 stored as signed 32-bit int, zswap32 returns signed too
-	          if ((state.flags ? hold : zswap32(hold)) !== state.check) {
-	            strm.msg = 'incorrect data check';
-	            state.mode = BAD;
-	            break;
-	          }
-	          //=== INITBITS();
-	          hold = 0;
-	          bits = 0;
-	          //===//
-	          //Tracev((stderr, "inflate:   check matches trailer\n"));
 	        }
-	        state.mode = LENGTH;
-	        /* falls through */
-	      case LENGTH:
-	        if (state.wrap && state.flags) {
-	          //=== NEEDBITS(32);
-	          while (bits < 32) {
-	            if (have === 0) { break inf_leave; }
-	            have--;
-	            hold += input[next++] << bits;
-	            bits += 8;
-	          }
-	          //===//
-	          if (hold !== (state.total & 0xffffffff)) {
-	            strm.msg = 'incorrect length check';
-	            state.mode = BAD;
-	            break;
-	          }
-	          //=== INITBITS();
-	          hold = 0;
-	          bits = 0;
-	          //===//
-	          //Tracev((stderr, "inflate:   length matches trailer\n"));
+	        _out = left;
+	        // NB: crc32 stored as signed 32-bit int, zswap32 returns signed too
+	        if ((state.flags ? hold : zswap32(hold)) !== state.check) {
+	          strm.msg = 'incorrect data check';
+	          state.mode = BAD;
+	          break;
 	        }
-	        state.mode = DONE;
-	        /* falls through */
-	      case DONE:
-	        ret = Z_STREAM_END;
-	        break inf_leave;
-	      case BAD:
-	        ret = Z_DATA_ERROR;
-	        break inf_leave;
-	      case MEM:
-	        return Z_MEM_ERROR;
-	      case SYNC:
-	        /* falls through */
-	      default:
-	        return Z_STREAM_ERROR;
+	        //=== INITBITS();
+	        hold = 0;
+	        bits = 0;
+	        //===//
+	        //Tracev((stderr, "inflate:   check matches trailer\n"));
+	      }
+	      state.mode = LENGTH;
+	      /* falls through */
+	    case LENGTH:
+	      if (state.wrap && state.flags) {
+	        //=== NEEDBITS(32);
+	        while (bits < 32) {
+	          if (have === 0) { break inf_leave; }
+	          have--;
+	          hold += input[next++] << bits;
+	          bits += 8;
+	        }
+	        //===//
+	        if (hold !== (state.total & 0xffffffff)) {
+	          strm.msg = 'incorrect length check';
+	          state.mode = BAD;
+	          break;
+	        }
+	        //=== INITBITS();
+	        hold = 0;
+	        bits = 0;
+	        //===//
+	        //Tracev((stderr, "inflate:   length matches trailer\n"));
+	      }
+	      state.mode = DONE;
+	      /* falls through */
+	    case DONE:
+	      ret = Z_STREAM_END;
+	      break inf_leave;
+	    case BAD:
+	      ret = Z_DATA_ERROR;
+	      break inf_leave;
+	    case MEM:
+	      return Z_MEM_ERROR;
+	    case SYNC:
+	      /* falls through */
+	    default:
+	      return Z_STREAM_ERROR;
 	    }
 	  }
 	
@@ -44024,25 +44012,6 @@
 /***/ (function(module, exports) {
 
 	'use strict';
-	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	// See state defs from inflate.js
 	var BAD = 30;       /* got a data error -- remain here until reset */
@@ -44226,7 +44195,7 @@
 	                  break top;
 	                }
 	
-	// (!) This block is disabled in zlib defaults,
+	// (!) This block is disabled in zlib defailts,
 	// don't enable it for binary compatibility
 	//#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
 	//                if (len <= op - whave) {
@@ -44376,24 +44345,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	var utils = __webpack_require__(62);
 	
@@ -44621,8 +44572,10 @@
 	    return 1;
 	  }
 	
+	  var i = 0;
 	  /* process all codes and make table entries */
 	  for (;;) {
+	    i++;
 	    /* create table entry */
 	    here_bits = len - drop;
 	    if (work[sym] < end) {
@@ -44725,24 +44678,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	module.exports = {
 	
@@ -44799,24 +44734,6 @@
 
 	'use strict';
 	
-	// (C) 1995-2013 Jean-loup Gailly and Mark Adler
-	// (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
-	//
-	// This software is provided 'as-is', without any express or implied
-	// warranty. In no event will the authors be held liable for any damages
-	// arising from the use of this software.
-	//
-	// Permission is granted to anyone to use this software for any purpose,
-	// including commercial applications, and to alter it and redistribute it
-	// freely, subject to the following restrictions:
-	//
-	// 1. The origin of this software must not be misrepresented; you must not
-	//   claim that you wrote the original software. If you use this software
-	//   in a product, an acknowledgment in the product documentation would be
-	//   appreciated but is not required.
-	// 2. Altered source versions must be plainly marked as such, and must not be
-	//   misrepresented as being the original software.
-	// 3. This notice may not be removed or altered from any source distribution.
 	
 	function GZheader() {
 	  /* true if compressed data believed to be text */
@@ -45340,18 +45257,10 @@
 
 	'use strict';
 	var base64 = __webpack_require__(51);
-	var utf8 = __webpack_require__(82);
-	var utils = __webpack_require__(58);
 	var ZipEntries = __webpack_require__(86);
 	module.exports = function(data, options) {
 	    var files, zipEntries, i, input;
-	    options = utils.extend(options || {}, {
-	        base64: false,
-	        checkCRC32: false,
-	        optimizedBinaryString : false,
-	        createFolders: false,
-	        decodeFileName: utf8.utf8decode
-	    });
+	    options = options || {};
 	    if (options.base64) {
 	        data = base64.decode(data);
 	    }
@@ -45360,12 +45269,12 @@
 	    files = zipEntries.files;
 	    for (i = 0; i < files.length; i++) {
 	        input = files[i];
-	        this.file(input.fileNameStr, input.decompressed, {
+	        this.file(input.fileName, input.decompressed, {
 	            binary: true,
 	            optimizedBinaryString: true,
 	            date: input.date,
 	            dir: input.dir,
-	            comment : input.fileCommentStr.length ? input.fileCommentStr : null,
+	            comment : input.fileComment.length ? input.fileComment : null,
 	            unixPermissions : input.unixPermissions,
 	            dosPermissions : input.dosPermissions,
 	            createFolders: options.createFolders
@@ -45387,10 +45296,9 @@
 	var StringReader = __webpack_require__(87);
 	var NodeBufferReader = __webpack_require__(89);
 	var Uint8ArrayReader = __webpack_require__(90);
-	var ArrayReader = __webpack_require__(91);
 	var utils = __webpack_require__(58);
 	var sig = __webpack_require__(79);
-	var ZipEntry = __webpack_require__(92);
+	var ZipEntry = __webpack_require__(91);
 	var support = __webpack_require__(53);
 	var jszipProto = __webpack_require__(52);
 	//  class ZipEntries {{{
@@ -45420,20 +45328,6 @@
 	        }
 	    },
 	    /**
-	     * Check if the given signature is at the given index.
-	     * @param {number} askedIndex the index to check.
-	     * @param {string} expectedSignature the signature to expect.
-	     * @return {boolean} true if the signature is here, false otherwise.
-	     */
-	    isSignature: function(askedIndex, expectedSignature) {
-	        var currentIndex = this.reader.index;
-	        this.reader.setIndex(askedIndex);
-	        var signature = this.reader.readString(4);
-	        var result = signature === expectedSignature;
-	        this.reader.setIndex(currentIndex);
-	        return result;
-	    },
-	    /**
 	     * Read the end of the central directory.
 	     */
 	    readBlockEndOfCentral: function() {
@@ -45448,12 +45342,10 @@
 	        // warning : the encoding depends of the system locale
 	        // On a linux machine with LANG=en_US.utf8, this field is utf8 encoded.
 	        // On a windows machine, this field is encoded with the localized windows code page.
-	        var zipComment = this.reader.readData(this.zipCommentLength);
-	        var decodeParamType = support.uint8array ? "uint8array" : "array";
+	        this.zipComment = this.reader.readString(this.zipCommentLength);
 	        // To get consistent behavior with the generation part, we will assume that
-	        // this is utf8 encoded unless specified otherwise.
-	        var decodeContent = utils.transformTo(decodeParamType, zipComment);
-	        this.zipComment = this.loadOptions.decodeFileName(decodeContent);
+	        // this is utf8 encoded.
+	        this.zipComment = jszipProto.utf8decode(this.zipComment);
 	    },
 	    /**
 	     * Read the end of the Zip 64 central directory.
@@ -45528,31 +45420,24 @@
 	            file.readCentralPart(this.reader);
 	            this.files.push(file);
 	        }
-	
-	        if (this.centralDirRecords !== this.files.length) {
-	            if (this.centralDirRecords !== 0 && this.files.length === 0) {
-	                // We expected some records but couldn't find ANY.
-	                // This is really suspicious, as if something went wrong.
-	                throw new Error("Corrupted zip or bug: expected " + this.centralDirRecords + " records in central dir, got " + this.files.length);
-	            } else {
-	                // We found some records but not all.
-	                // Something is wrong but we got something for the user: no error here.
-	                // console.warn("expected", this.centralDirRecords, "records in central dir, got", this.files.length);
-	            }
-	        }
 	    },
 	    /**
 	     * Read the end of central directory.
 	     */
 	    readEndOfCentral: function() {
 	        var offset = this.reader.lastIndexOfSignature(sig.CENTRAL_DIRECTORY_END);
-	        if (offset < 0) {
+	        if (offset === -1) {
 	            // Check if the content is a truncated zip or complete garbage.
 	            // A "LOCAL_FILE_HEADER" is not required at the beginning (auto
 	            // extractible zip for example) but it can give a good hint.
 	            // If an ajax request was used without responseType, we will also
 	            // get unreadable data.
-	            var isGarbage = !this.isSignature(0, sig.LOCAL_FILE_HEADER);
+	            var isGarbage = true;
+	            try {
+	                this.reader.setIndex(0);
+	                this.checkSignature(sig.LOCAL_FILE_HEADER);
+	                isGarbage = false;
+	            } catch (e) {}
 	
 	            if (isGarbage) {
 	                throw new Error("Can't find end of central directory : is this a zip file ? " +
@@ -45562,7 +45447,6 @@
 	            }
 	        }
 	        this.reader.setIndex(offset);
-	        var endOfCentralDirOffset = offset;
 	        this.checkSignature(sig.CENTRAL_DIRECTORY_END);
 	        this.readBlockEndOfCentral();
 	
@@ -45591,7 +45475,7 @@
 	
 	            // should look for a zip64 EOCD locator
 	            offset = this.reader.lastIndexOfSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
-	            if (offset < 0) {
+	            if (offset === -1) {
 	                throw new Error("Corrupted zip : can't find the ZIP64 end of central directory locator");
 	            }
 	            this.reader.setIndex(offset);
@@ -45599,55 +45483,21 @@
 	            this.readBlockZip64EndOfCentralLocator();
 	
 	            // now the zip64 EOCD record
-	            if (!this.isSignature(this.relativeOffsetEndOfZip64CentralDir, sig.ZIP64_CENTRAL_DIRECTORY_END)) {
-	                // console.warn("ZIP64 end of central directory not where expected.");
-	                this.relativeOffsetEndOfZip64CentralDir = this.reader.lastIndexOfSignature(sig.ZIP64_CENTRAL_DIRECTORY_END);
-	                if (this.relativeOffsetEndOfZip64CentralDir < 0) {
-	                    throw new Error("Corrupted zip : can't find the ZIP64 end of central directory");
-	                }
-	            }
 	            this.reader.setIndex(this.relativeOffsetEndOfZip64CentralDir);
 	            this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_END);
 	            this.readBlockZip64EndOfCentral();
 	        }
-	
-	        var expectedEndOfCentralDirOffset = this.centralDirOffset + this.centralDirSize;
-	        if (this.zip64) {
-	            expectedEndOfCentralDirOffset += 20; // end of central dir 64 locator
-	            expectedEndOfCentralDirOffset += 12 /* should not include the leading 12 bytes */ + this.zip64EndOfCentralSize;
-	        }
-	
-	        var extraBytes = endOfCentralDirOffset - expectedEndOfCentralDirOffset;
-	
-	        if (extraBytes > 0) {
-	            // console.warn(extraBytes, "extra bytes at beginning or within zipfile");
-	            if (this.isSignature(endOfCentralDirOffset, sig.CENTRAL_FILE_HEADER)) {
-	                // The offsets seem wrong, but we have something at the specified offset.
-	                // So… we keep it.
-	            } else {
-	                // the offset is wrong, update the "zero" of the reader
-	                // this happens if data has been prepended (crx files for example)
-	                this.reader.zero = extraBytes;
-	            }
-	        } else if (extraBytes < 0) {
-	            throw new Error("Corrupted zip: missing " + Math.abs(extraBytes) + " bytes.");
-	        }
 	    },
 	    prepareReader: function(data) {
 	        var type = utils.getTypeOf(data);
-	        utils.checkSupport(type);
 	        if (type === "string" && !support.uint8array) {
 	            this.reader = new StringReader(data, this.loadOptions.optimizedBinaryString);
 	        }
 	        else if (type === "nodebuffer") {
 	            this.reader = new NodeBufferReader(data);
 	        }
-	        else if (support.uint8array) {
+	        else {
 	            this.reader = new Uint8ArrayReader(utils.transformTo("uint8array", data));
-	        } else if (support.array) {
-	            this.reader = new ArrayReader(utils.transformTo("array", data));
-	        } else {
-	            throw new Error("Unexpected error: unsupported type '" + type + "'");
 	        }
 	    },
 	    /**
@@ -45680,20 +45530,19 @@
 	    }
 	    this.length = this.data.length;
 	    this.index = 0;
-	    this.zero = 0;
 	}
 	StringReader.prototype = new DataReader();
 	/**
 	 * @see DataReader.byteAt
 	 */
 	StringReader.prototype.byteAt = function(i) {
-	    return this.data.charCodeAt(this.zero + i);
+	    return this.data.charCodeAt(i);
 	};
 	/**
 	 * @see DataReader.lastIndexOfSignature
 	 */
 	StringReader.prototype.lastIndexOfSignature = function(sig) {
-	    return this.data.lastIndexOf(sig) - this.zero;
+	    return this.data.lastIndexOf(sig);
 	};
 	/**
 	 * @see DataReader.readData
@@ -45701,7 +45550,7 @@
 	StringReader.prototype.readData = function(size) {
 	    this.checkOffset(size);
 	    // this will work because the constructor applied the "& 0xff" mask.
-	    var result = this.data.slice(this.zero + this.index, this.zero + this.index + size);
+	    var result = this.data.slice(this.index, this.index + size);
 	    this.index += size;
 	    return result;
 	};
@@ -45719,7 +45568,6 @@
 	    this.data = null; // type : see implementation
 	    this.length = 0;
 	    this.index = 0;
-	    this.zero = 0;
 	}
 	DataReader.prototype = {
 	    /**
@@ -45736,7 +45584,7 @@
 	     * @throws {Error} an Error if the index is out of bounds.
 	     */
 	    checkIndex: function(newIndex) {
-	        if (this.length < this.zero + newIndex || newIndex < 0) {
+	        if (this.length < newIndex || newIndex < 0) {
 	            throw new Error("End of data reached (data length = " + this.length + ", asked index = " + (newIndex) + "). Corrupted zip ?");
 	        }
 	    },
@@ -45833,7 +45681,6 @@
 	    this.data = data;
 	    this.length = this.data.length;
 	    this.index = 0;
-	    this.zero = 0;
 	}
 	NodeBufferReader.prototype = new Uint8ArrayReader();
 	
@@ -45842,7 +45689,7 @@
 	 */
 	NodeBufferReader.prototype.readData = function(size) {
 	    this.checkOffset(size);
-	    var result = this.data.slice(this.zero + this.index, this.zero + this.index + size);
+	    var result = this.data.slice(this.index, this.index + size);
 	    this.index += size;
 	    return result;
 	};
@@ -45854,17 +45701,38 @@
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var ArrayReader = __webpack_require__(91);
+	var DataReader = __webpack_require__(88);
 	
 	function Uint8ArrayReader(data) {
 	    if (data) {
 	        this.data = data;
 	        this.length = this.data.length;
 	        this.index = 0;
-	        this.zero = 0;
 	    }
 	}
-	Uint8ArrayReader.prototype = new ArrayReader();
+	Uint8ArrayReader.prototype = new DataReader();
+	/**
+	 * @see DataReader.byteAt
+	 */
+	Uint8ArrayReader.prototype.byteAt = function(i) {
+	    return this.data[i];
+	};
+	/**
+	 * @see DataReader.lastIndexOfSignature
+	 */
+	Uint8ArrayReader.prototype.lastIndexOfSignature = function(sig) {
+	    var sig0 = sig.charCodeAt(0),
+	        sig1 = sig.charCodeAt(1),
+	        sig2 = sig.charCodeAt(2),
+	        sig3 = sig.charCodeAt(3);
+	    for (var i = this.length - 4; i >= 0; --i) {
+	        if (this.data[i] === sig0 && this.data[i + 1] === sig1 && this.data[i + 2] === sig2 && this.data[i + 3] === sig3) {
+	            return i;
+	        }
+	    }
+	
+	    return -1;
+	};
 	/**
 	 * @see DataReader.readData
 	 */
@@ -45874,7 +45742,7 @@
 	        // in IE10, when using subarray(idx, idx), we get the array [0x00] instead of [].
 	        return new Uint8Array(0);
 	    }
-	    var result = this.data.subarray(this.zero + this.index, this.zero + this.index + size);
+	    var result = this.data.subarray(this.index, this.index + size);
 	    this.index += size;
 	    return result;
 	};
@@ -45886,68 +45754,10 @@
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var DataReader = __webpack_require__(88);
-	
-	function ArrayReader(data) {
-	    if (data) {
-	        this.data = data;
-	        this.length = this.data.length;
-	        this.index = 0;
-	        this.zero = 0;
-	
-	        for(var i = 0; i < this.data.length; i++) {
-	            data[i] = data[i] & 0xFF;
-	        }
-	    }
-	}
-	ArrayReader.prototype = new DataReader();
-	/**
-	 * @see DataReader.byteAt
-	 */
-	ArrayReader.prototype.byteAt = function(i) {
-	    return this.data[this.zero + i];
-	};
-	/**
-	 * @see DataReader.lastIndexOfSignature
-	 */
-	ArrayReader.prototype.lastIndexOfSignature = function(sig) {
-	    var sig0 = sig.charCodeAt(0),
-	        sig1 = sig.charCodeAt(1),
-	        sig2 = sig.charCodeAt(2),
-	        sig3 = sig.charCodeAt(3);
-	    for (var i = this.length - 4; i >= 0; --i) {
-	        if (this.data[i] === sig0 && this.data[i + 1] === sig1 && this.data[i + 2] === sig2 && this.data[i + 3] === sig3) {
-	            return i - this.zero;
-	        }
-	    }
-	
-	    return -1;
-	};
-	/**
-	 * @see DataReader.readData
-	 */
-	ArrayReader.prototype.readData = function(size) {
-	    this.checkOffset(size);
-	    if(size === 0) {
-	        return [];
-	    }
-	    var result = this.data.slice(this.zero + this.index, this.zero + this.index + size);
-	    this.index += size;
-	    return result;
-	};
-	module.exports = ArrayReader;
-
-
-/***/ }),
-/* 92 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
 	var StringReader = __webpack_require__(87);
 	var utils = __webpack_require__(58);
 	var CompressedObject = __webpack_require__(81);
 	var jszipProto = __webpack_require__(52);
-	var support = __webpack_require__(53);
 	
 	var MADE_BY_DOS = 0x00;
 	var MADE_BY_UNIX = 0x03;
@@ -46045,7 +45855,7 @@
 	        // Unfortunately, this lead also to some issues : http://seclists.org/fulldisclosure/2009/Sep/394
 	        this.fileNameLength = reader.readInt(2);
 	        localExtraFieldsLength = reader.readInt(2); // can't be sure this will be the same as the central dir
-	        this.fileName = reader.readData(this.fileNameLength);
+	        this.fileName = reader.readString(this.fileNameLength);
 	        reader.skip(localExtraFieldsLength);
 	
 	        if (this.compressedSize == -1 || this.uncompressedSize == -1) {
@@ -46054,7 +45864,7 @@
 	
 	        compression = utils.findCompression(this.compressionMethod);
 	        if (compression === null) { // no compression found
-	            throw new Error("Corrupted zip : compression " + utils.pretty(this.compressionMethod) + " unknown (inner file : " +  utils.transformTo("string", this.fileName) + ")");
+	            throw new Error("Corrupted zip : compression " + utils.pretty(this.compressionMethod) + " unknown (inner file : " + this.fileName + ")");
 	        }
 	        this.decompressed = new CompressedObject();
 	        this.decompressed.compressedSize = this.compressedSize;
@@ -46098,10 +45908,10 @@
 	            throw new Error("Encrypted zip are not supported");
 	        }
 	
-	        this.fileName = reader.readData(this.fileNameLength);
+	        this.fileName = reader.readString(this.fileNameLength);
 	        this.readExtraFields(reader);
 	        this.parseZIP64ExtraField(reader);
-	        this.fileComment = reader.readData(this.fileCommentLength);
+	        this.fileComment = reader.readString(this.fileCommentLength);
 	    },
 	
 	    /**
@@ -46128,7 +45938,7 @@
 	        }
 	
 	        // fail safe : if the name ends with a / it probably means a folder
-	        if (!this.dir && this.fileNameStr.slice(-1) === '/') {
+	        if (!this.dir && this.fileName.slice(-1) === '/') {
 	            this.dir = true;
 	        }
 	    },
@@ -46189,25 +45999,17 @@
 	     * Apply an UTF8 transformation if needed.
 	     */
 	    handleUTF8: function() {
-	        var decodeParamType = support.uint8array ? "uint8array" : "array";
 	        if (this.useUTF8()) {
-	            this.fileNameStr = jszipProto.utf8decode(this.fileName);
-	            this.fileCommentStr = jszipProto.utf8decode(this.fileComment);
+	            this.fileName = jszipProto.utf8decode(this.fileName);
+	            this.fileComment = jszipProto.utf8decode(this.fileComment);
 	        } else {
 	            var upath = this.findExtraFieldUnicodePath();
 	            if (upath !== null) {
-	                this.fileNameStr = upath;
-	            } else {
-	                var fileNameByteArray =  utils.transformTo(decodeParamType, this.fileName);
-	                this.fileNameStr = this.loadOptions.decodeFileName(fileNameByteArray);
+	                this.fileName = upath;
 	            }
-	
 	            var ucomment = this.findExtraFieldUnicodeComment();
 	            if (ucomment !== null) {
-	                this.fileCommentStr = ucomment;
-	            } else {
-	                var commentByteArray =  utils.transformTo(decodeParamType, this.fileComment);
-	                this.fileCommentStr = this.loadOptions.decodeFileName(commentByteArray);
+	                this.fileComment = ucomment;
 	            }
 	        }
 	    },
@@ -46264,7 +46066,7 @@
 
 
 /***/ }),
-/* 93 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -46375,7 +46177,7 @@
 
 
 /***/ }),
-/* 94 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -46457,7 +46259,7 @@
 	
 	var _ScratchAudio2 = _interopRequireDefault(_ScratchAudio);
 	
-	var _Scripts = __webpack_require__(95);
+	var _Scripts = __webpack_require__(94);
 	
 	var _Scripts2 = _interopRequireDefault(_Scripts);
 	
@@ -46523,7 +46325,7 @@
 	            var spr = this;
 	            var url = _MediaLib2.default.keys[md5] && md5.indexOf('_custom') < 0 ? _MediaLib2.default.path + md5 : md5.indexOf('/') < 0 ? _iOS2.default.path + md5 : md5; //modified_by_Yaroslav
 	            md5 = _MediaLib2.default.keys[md5] && md5.indexOf('_custom') < 0 ? _MediaLib2.default.path + md5 : md5;
-	            if (md5.indexOf('/') > -1) {
+	            if (md5.indexOf('/') > -1 && md5.indexOf(_iOS2.default.storagePath) < 0) {
 	                _IO2.default.requestFromServer(md5, doNext);
 	            } else {
 	                if (md5.indexOf('_custom') != -1) {
@@ -46538,9 +46340,9 @@
 	            function doNext(str) {
 	                str = str.replace(/>\s*</g, '><');
 	                spr.setSVG(str);
-	                if (str.indexOf('xlink:href') < 0 && _iOS2.default.path) {
-	                    whenDone(url); // does not have embedded images
-	                } else {
+	                if (str.indexOf('xlink:href') < 0 && url.indexOf(_iOS2.default.storagePath) < 0 /*&& iOS.path !== iOS.storagePath*/) {
+	                        whenDone(url); // does not have embedded images
+	                    } else {
 	                    var base64 = _IO2.default.getImageDataURL(spr.md5, btoa(str));
 	                    _IO2.default.getImagesInSVG(str, function () {
 	                        whenDone(base64);
@@ -46562,7 +46364,13 @@
 	        key: 'setCostume',
 	        value: function setCostume(dataurl, fcn) {
 	            var img = document.createElement('img');
-	            img.src = dataurl;
+	            console.log("In editor/engine/Sprite.js in setCostume dataurl = " + dataurl);
+	            if (dataurl.indexOf('data:image/svg+xml;base64,') < 0 && dataurl.indexOf('svglibrary') < 0) {
+	                img.src = 'data:image/svg+xml;base64,' + dataurl;
+	            } else {
+	                img.src = dataurl;
+	            }
+	            //img.src = dataurl;
 	            this.img = img;
 	            // Make a copy that is not affected by zoom transformation
 	            this.originalImg = img.cloneNode(false);
@@ -47208,6 +47016,7 @@
 	            var b = a[1].split('h-1');
 	            str = a[0] + 'h' + (-side1 + 7 + curve) + b[0] + 'h' + (-side2 + 7 + curve) + b[1];
 	            img.src = 'data:image/svg+xml;base64,' + btoa(str);
+	            console.log("In editor/engine/Sprite.js in drawBalloon img.src.length = " + img.src.length);
 	        }
 	
 	        /////////////////////////////////////
@@ -47536,6 +47345,7 @@
 	            var str = new XMLSerializer().serializeToString(svg);
 	            str = str.replace(/ href="data:image/g, ' xlink:href="data:image');
 	            img.src = 'data:image/svg+xml;base64,' + btoa(str);
+	            console.log("In editor/engine/Sprite.js in getSVGimage img.src.length = " + img.src.length);
 	            return img;
 	        }
 	
@@ -47756,7 +47566,7 @@
 	exports.default = Sprite;
 
 /***/ }),
-/* 95 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -48552,7 +48362,7 @@
 	exports.default = Scripts;
 
 /***/ }),
-/* 96 */
+/* 95 */
 /***/ (function(module, exports) {
 
 	"use strict";
@@ -48672,7 +48482,7 @@
 	exports.default = Matrix;
 
 /***/ }),
-/* 97 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -48695,7 +48505,7 @@
 	
 	var _Prims2 = _interopRequireDefault(_Prims);
 	
-	var _Thread = __webpack_require__(98);
+	var _Thread = __webpack_require__(97);
 	
 	var _Thread2 = _interopRequireDefault(_Thread);
 	
@@ -49114,7 +48924,7 @@
 	exports.default = Runtime;
 
 /***/ }),
-/* 98 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -49319,7 +49129,7 @@
 	exports.default = Thread;
 
 /***/ }),
-/* 99 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -49491,73 +49301,73 @@
 	exports.default = Samples;
 
 /***/ }),
-/* 100 */
+/* 99 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"en",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:true,formats:{short:"{1}, {0}",medium:"{1}, {0}",full:"{1} 'at' {0}",long:"{1} 'at' {0}",availableFormats:{"d":"d","E":"ccc",Ed:"d E",Ehm:"E h:mm a",EHm:"E HH:mm",Ehms:"E h:mm:ss a",EHms:"E HH:mm:ss",Gy:"y G",GyMMM:"MMM y G",GyMMMd:"MMM d, y G",GyMMMEd:"E, MMM d, y G","h":"h a","H":"HH",hm:"h:mm a",Hm:"HH:mm",hms:"h:mm:ss a",Hms:"HH:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"HH:mm:ss v",hmv:"h:mm a v",Hmv:"HH:mm v","M":"L",Md:"M/d",MEd:"E, M/d",MMM:"LLL",MMMd:"MMM d",MMMEd:"E, MMM d",MMMMd:"MMMM d",ms:"mm:ss","y":"y",yM:"M/y",yMd:"M/d/y",yMEd:"E, M/d/y",yMMM:"MMM y",yMMMd:"MMM d, y",yMMMEd:"E, MMM d, y",yMMMM:"MMMM y",yQQQ:"QQQ y",yQQQQ:"QQQQ y"},dateFormats:{yMMMMEEEEd:"EEEE, MMMM d, y",yMMMMd:"MMMM d, y",yMMMd:"MMM d, y",yMd:"M/d/yy"},timeFormats:{hmmsszzzz:"h:mm:ss a zzzz",hmsz:"h:mm:ss a z",hms:"h:mm:ss a",hm:"h:mm a"}},calendars:{buddhist:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],long:["January","February","March","April","May","June","July","August","September","October","November","December"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["BE"],short:["BE"],long:["BE"]},dayPeriods:{am:"AM",pm:"PM"}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Mo1","Mo2","Mo3","Mo4","Mo5","Mo6","Mo7","Mo8","Mo9","Mo10","Mo11","Mo12"],long:["Month1","Month2","Month3","Month4","Month5","Month6","Month7","Month8","Month9","Month10","Month11","Month12"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},dayPeriods:{am:"AM",pm:"PM"}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"],long:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Mo1","Mo2","Mo3","Mo4","Mo5","Mo6","Mo7","Mo8","Mo9","Mo10","Mo11","Mo12"],long:["Month1","Month2","Month3","Month4","Month5","Month6","Month7","Month8","Month9","Month10","Month11","Month12"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},dayPeriods:{am:"AM",pm:"PM"}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"AM",pm:"PM"}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},gregory:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],long:["January","February","March","April","May","June","July","August","September","October","November","December"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["B","A","BCE","CE"],short:["BC","AD","BCE","CE"],long:["Before Christ","Anno Domini","Before Common Era","Common Era"]},dayPeriods:{am:"AM",pm:"PM"}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"],long:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"AM",pm:"PM"}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"],long:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["Saka"],short:["Saka"],long:["Saka"]},dayPeriods:{am:"AM",pm:"PM"}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"AM",pm:"PM"}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"AM",pm:"PM"}},japanese:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],long:["January","February","March","April","May","June","July","August","September","October","November","December"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"],long:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"]},dayPeriods:{am:"AM",pm:"PM"}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"],long:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"AM",pm:"PM"}},roc:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],long:["January","February","March","April","May","June","July","August","September","October","November","December"]},days:{narrow:["S","M","T","W","T","F","S"],short:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],long:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},eras:{narrow:["Before R.O.C.","Minguo"],short:["Before R.O.C.","Minguo"],long:["Before R.O.C.","Minguo"]},dayPeriods:{am:"AM",pm:"PM"}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{currency}{number}",negativePattern:"{minusSign}{currency}{number}"},percent:{positivePattern:"{number}{percentSign}",negativePattern:"{minusSign}{number}{percentSign}"}},symbols:{latn:{decimal:".",group:",",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{AUD:"A$",BRL:"R$",CAD:"CA$",CNY:"CN¥",EUR:"€",GBP:"£",HKD:"HK$",ILS:"₪",INR:"₹",JPY:"¥",KRW:"₩",MXN:"MX$",NZD:"NZ$",TWD:"NT$",USD:"$",VND:"₫",XAF:"FCFA",XCD:"EC$",XOF:"CFA",XPF:"CFPF"}}});
 
 /***/ }),
-/* 101 */
+/* 100 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"es",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1} {0}",medium:"{1} {0}",full:"{1}, {0}",long:"{1}, {0}",availableFormats:{"d":"d","E":"ccc",Ed:"E d",Ehm:"E, h:mm a",EHm:"E, H:mm",Ehms:"E, h:mm:ss a",EHms:"E, H:mm:ss",Gy:"y G",GyMMM:"MMM y G",GyMMMd:"d MMM y G",GyMMMEd:"E, d MMM y G",GyMMMM:"MMMM 'de' y G",GyMMMMd:"d 'de' MMMM 'de' y G",GyMMMMEd:"E, d 'de' MMMM 'de' y G","h":"h a","H":"H",hm:"h:mm a",Hm:"H:mm",hms:"h:mm:ss a",Hms:"H:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"H:mm:ss v",hmsvvvv:"h:mm:ss a (vvvv)",Hmsvvvv:"H:mm:ss (vvvv)",hmv:"h:mm a v",Hmv:"H:mm v","M":"L",Md:"d/M",MEd:"E, d/M",MMd:"d/M",MMdd:"d/M",MMM:"LLL",MMMd:"d MMM",MMMEd:"E, d MMM",MMMMd:"d 'de' MMMM",MMMMEd:"E, d 'de' MMMM",ms:"mm:ss","y":"y",yM:"M/y",yMd:"d/M/y",yMEd:"EEE, d/M/y",yMM:"M/y",yMMM:"MMM y",yMMMd:"d MMM y",yMMMEd:"EEE, d MMM y",yMMMM:"MMMM 'de' y",yMMMMd:"d 'de' MMMM 'de' y",yMMMMEd:"EEE, d 'de' MMMM 'de' y",yQQQ:"QQQ y",yQQQQ:"QQQQ 'de' y"},dateFormats:{yMMMMEEEEd:"EEEE, d 'de' MMMM 'de' y",yMMMMd:"d 'de' MMMM 'de' y",yMMMd:"d MMM y",yMd:"d/M/yy"},timeFormats:{hmmsszzzz:"H:mm:ss (zzzz)",hmsz:"H:mm:ss z",hms:"H:mm:ss",hm:"H:mm"}},calendars:{buddhist:{months:{narrow:["E","F","M","A","M","J","J","A","S","O","N","D"],short:["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","sept.","oct.","nov.","dic."],long:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["BE"],short:["BE"],long:["BE"]},dayPeriods:{am:"a. m.",pm:"p. m."}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},dayPeriods:{am:"a. m.",pm:"p. m."}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"],long:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a. m.",pm:"p. m."}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},dayPeriods:{am:"a. m.",pm:"p. m."}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a. m.",pm:"p. m."}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"a. m.",pm:"p. m."}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a. m.",pm:"p. m."}},gregory:{months:{narrow:["E","F","M","A","M","J","J","A","S","O","N","D"],short:["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","sept.","oct.","nov.","dic."],long:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["a. C.","d. C.","a. e. c.","e. c."],short:["a. C.","d. C.","a. e. c.","e. c."],long:["antes de Cristo","después de Cristo","antes de la era común","era común"]},dayPeriods:{am:"a. m.",pm:"p. m."}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"],long:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"a. m.",pm:"p. m."}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"],long:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["Saka"],short:["Saka"],long:["Saka"]},dayPeriods:{am:"a. m.",pm:"p. m."}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"a. m.",pm:"p. m."}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"a. m.",pm:"p. m."}},japanese:{months:{narrow:["E","F","M","A","M","J","J","A","S","O","N","D"],short:["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","sept.","oct.","nov.","dic."],long:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"],long:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"]},dayPeriods:{am:"a. m.",pm:"p. m."}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"],long:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"a. m.",pm:"p. m."}},roc:{months:{narrow:["E","F","M","A","M","J","J","A","S","O","N","D"],short:["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","sept.","oct.","nov.","dic."],long:["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"]},days:{narrow:["D","L","M","X","J","V","S"],short:["dom.","lun.","mar.","mié.","jue.","vie.","sáb."],long:["domingo","lunes","martes","miércoles","jueves","viernes","sábado"]},eras:{narrow:["antes de R.O.C.","R.O.C."],short:["antes de R.O.C.","R.O.C."],long:["antes de R.O.C.","R.O.C."]},dayPeriods:{am:"a. m.",pm:"p. m."}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{number} {currency}",negativePattern:"{minusSign}{number} {currency}"},percent:{positivePattern:"{number} {percentSign}",negativePattern:"{minusSign}{number} {percentSign}"}},symbols:{latn:{decimal:",",group:".",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{CAD:"CA$",ESP:"₧",EUR:"€",THB:"฿",USD:"$",VND:"₫",XPF:"CFPF"}}});
 
 /***/ }),
-/* 102 */
+/* 101 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"fr",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1} {0}",medium:"{1} 'à' {0}",full:"{1} 'à' {0}",long:"{1} 'à' {0}",availableFormats:{"d":"d","E":"E",Ed:"E d",Ehm:"E h:mm a",EHm:"E HH:mm",Ehms:"E h:mm:ss a",EHms:"E HH:mm:ss",Gy:"y G",GyMMM:"MMM y G",GyMMMd:"d MMM y G",GyMMMEd:"E d MMM y G","h":"h a","H":"HH 'h'",hm:"h:mm a",Hm:"HH:mm",hms:"h:mm:ss a",Hms:"HH:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"HH:mm:ss v",hmv:"h:mm a v",Hmv:"HH:mm v","M":"L",Md:"dd/MM",MEd:"E dd/MM",MMM:"LLL",MMMd:"d MMM",MMMEd:"E d MMM",MMMMd:"d MMMM",ms:"mm:ss","y":"y",yM:"MM/y",yMd:"dd/MM/y",yMEd:"E dd/MM/y",yMMM:"MMM y",yMMMd:"d MMM y",yMMMEd:"E d MMM y",yMMMM:"MMMM y",yQQQ:"QQQ y",yQQQQ:"QQQQ y"},dateFormats:{yMMMMEEEEd:"EEEE d MMMM y",yMMMMd:"d MMMM y",yMMMd:"d MMM y",yMd:"dd/MM/y"},timeFormats:{hmmsszzzz:"HH:mm:ss zzzz",hmsz:"HH:mm:ss z",hms:"HH:mm:ss",hm:"HH:mm"}},calendars:{buddhist:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."],long:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["E.B."],short:["ère b."],long:["ère bouddhiste"]},dayPeriods:{am:"AM",pm:"PM"}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1yuè","2yuè","3yuè","4yuè","5yuè","6yuè","7yuè","8yuè","9yuè","10yuè","11yuè","12yuè"],long:["zhēngyuè","èryuè","sānyuè","sìyuè","wǔyuè","liùyuè","qīyuè","bāyuè","jiǔyuè","shíyuè","shíyīyuè","shí’èryuè"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},dayPeriods:{am:"AM",pm:"PM"}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"],long:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1yuè","2yuè","3yuè","4yuè","5yuè","6yuè","7yuè","8yuè","9yuè","10yuè","11yuè","12yuè"],long:["zhēngyuè","èryuè","sānyuè","sìyuè","wǔyuè","liùyuè","qīyuè","bāyuè","jiǔyuè","shíyuè","shíyīyuè","shí’èryuè"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},dayPeriods:{am:"AM",pm:"PM"}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"AM",pm:"PM"}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},gregory:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."],long:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["av. J.-C.","ap. J.-C.","AEC","EC"],short:["av. J.-C.","ap. J.-C.","AEC","EC"],long:["avant Jésus-Christ","après Jésus-Christ","avant l’ère commune","de l’ère commune"]},dayPeriods:{am:"AM",pm:"PM"}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Tisseri","Hesvan","Kislev","Tébeth","Schébat","Adar I","Adar","Nissan","Iyar","Sivan","Tamouz","Ab","Elloul","Adar II"],long:["Tisseri","Hesvan","Kislev","Tébeth","Schébat","Adar I","Adar","Nissan","Iyar","Sivan","Tamouz","Ab","Elloul","Adar II"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"AM",pm:"PM"}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"],long:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["Saka"],short:["Saka"],long:["Saka"]},dayPeriods:{am:"AM",pm:"PM"}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["mouh.","saf.","rab. aw.","rab. th.","joum. oul.","joum. tha.","raj.","chaa.","ram.","chaw.","dhou. q.","dhou. h."],long:["mouharram","safar","rabia al awal","rabia ath-thani","joumada al oula","joumada ath-thania","rajab","chaabane","ramadan","chawwal","dhou al qi`da","dhou al-hijja"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"AM",pm:"PM"}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["mouh.","saf.","rab. aw.","rab. th.","joum. oul.","joum. tha.","raj.","chaa.","ram.","chaw.","dhou. q.","dhou. h."],long:["mouharram","safar","rabia al awal","rabia ath-thani","joumada al oula","joumada ath-thania","rajab","chaabane","ramadan","chawwal","dhou al qi`da","dhou al-hijja"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"AM",pm:"PM"}},japanese:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."],long:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"],long:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"]},dayPeriods:{am:"AM",pm:"PM"}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"],long:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"AM",pm:"PM"}},roc:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."],long:["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]},days:{narrow:["D","L","M","M","J","V","S"],short:["dim.","lun.","mar.","mer.","jeu.","ven.","sam."],long:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]},eras:{narrow:["avant RdC","RdC"],short:["avant RdC","RdC"],long:["avant RdC","RdC"]},dayPeriods:{am:"AM",pm:"PM"}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{number} {currency}",negativePattern:"{minusSign}{number} {currency}"},percent:{positivePattern:"{number} {percentSign}",negativePattern:"{minusSign}{number} {percentSign}"}},symbols:{latn:{decimal:",",group:" ",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{ARS:"$AR",AUD:"$AU",BEF:"FB",BMD:"$BM",BND:"$BN",BRL:"R$",BSD:"$BS",BZD:"$BZ",CAD:"$CA",CLP:"$CL",COP:"$CO",CYP:"£CY",EUR:"€",FJD:"$FJ",FKP:"£FK",FRF:"F",GBP:"£GB",GIP:"£GI",IEP:"£IE",ILP:"£IL",ILS:"₪",INR:"₹",ITL:"₤IT",KRW:"₩",LBP:"£LB",MTP:"£MT",MXN:"$MX",NAD:"$NA",NZD:"$NZ",RHD:"$RH",SBD:"$SB",SGD:"$SG",SRD:"$SR",TTD:"$TT",USD:"$US",UYU:"$UY",VND:"₫",WST:"WS$",XAF:"FCFA",XOF:"CFA",XPF:"FCFP"}}});
 
 /***/ }),
-/* 103 */
+/* 102 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"ca",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1} {0}",medium:"{1}, {0}",full:"{1} 'a' 'les' {0}",long:"{1}, {0}",availableFormats:{"d":"d","E":"ccc",Ed:"E d",Ehm:"E h:mm a",EHm:"E H:mm",Ehms:"E h:mm:ss a",EHms:"E H:mm:ss",Gy:"y G",GyMMM:"LLL y G",GyMMMd:"d MMM y G",GyMMMEd:"E, d MMM y G",GyMMMM:"LLLL 'de' y G",GyMMMMd:"d MMMM 'de' y G",GyMMMMEd:"E, d MMMM 'de' y G","h":"h a","H":"H",hm:"h:mm a",Hm:"HH:mm",hms:"h:mm:ss a",Hms:"HH:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"HH:mm:ss v",hmv:"h:mm a v",Hmv:"HH:mm v","M":"L",Md:"d/M",MEd:"E d/M",MMM:"LLL",MMMd:"d MMM",MMMEd:"E, d MMM",MMMMd:"d MMMM",MMMMEd:"E, d MMMM",ms:"mm:ss","y":"y",yM:"M/y",yMd:"d/M/y",yMEd:"E, d/M/y",yMMM:"LLL 'de' y",yMMMd:"d MMM y",yMMMEd:"E, d MMM y",yMMMM:"LLLL 'de' y",yMMMMd:"d MMMM 'de' y",yMMMMEd:"E, d MMMM 'de' y",yQQQ:"QQQ y",yQQQQ:"QQQQ y"},dateFormats:{yMMMMEEEEd:"EEEE, d MMMM 'de' y",yMMMMd:"d MMMM 'de' y",yMMMd:"d MMM y",yMd:"d/M/yy"},timeFormats:{hmmsszzzz:"H:mm:ss zzzz",hmsz:"H:mm:ss z",hms:"H:mm:ss",hm:"H:mm"}},calendars:{buddhist:{months:{narrow:["GN","FB","MÇ","AB","MG","JN","JL","AG","ST","OC","NV","DS"],short:["gen.","febr.","març","abr.","maig","juny","jul.","ag.","set.","oct.","nov.","des."],long:["de gener","de febrer","de març","d’abril","de maig","de juny","de juliol","d’agost","de setembre","d’octubre","de novembre","de desembre"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["eB"],short:["eB"],long:["eB"]},dayPeriods:{am:"a. m.",pm:"p. m."}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1","2","3","4","5","6","7","8","9","10","11","12"],long:["1","2","3","4","5","6","7","8","9","10","11","12"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},dayPeriods:{am:"a. m.",pm:"p. m."}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"],long:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a. m.",pm:"p. m."}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1","2","3","4","5","6","7","8","9","10","11","12"],long:["1","2","3","4","5","6","7","8","9","10","11","12"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},dayPeriods:{am:"a. m.",pm:"p. m."}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a. m.",pm:"p. m."}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"a. m.",pm:"p. m."}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a. m.",pm:"p. m."}},gregory:{months:{narrow:["GN","FB","MÇ","AB","MG","JN","JL","AG","ST","OC","NV","DS"],short:["gen.","febr.","març","abr.","maig","juny","jul.","ag.","set.","oct.","nov.","des."],long:["de gener","de febrer","de març","d’abril","de maig","de juny","de juliol","d’agost","de setembre","d’octubre","de novembre","de desembre"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["aC","dC","AEC","EC"],short:["aC","dC","AEC","EC"],long:["abans de Crist","després de Crist","abans de l’Era Comuna","Era Comuna"]},dayPeriods:{am:"a. m.",pm:"p. m."}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"],long:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"a. m.",pm:"p. m."}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"],long:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["Saka"],short:["Saka"],long:["Saka"]},dayPeriods:{am:"a. m.",pm:"p. m."}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"a. m.",pm:"p. m."}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"a. m.",pm:"p. m."}},japanese:{months:{narrow:["GN","FB","MÇ","AB","MG","JN","JL","AG","ST","OC","NV","DS"],short:["gen.","febr.","març","abr.","maig","juny","jul.","ag.","set.","oct.","nov.","des."],long:["de gener","de febrer","de març","d’abril","de maig","de juny","de juliol","d’agost","de setembre","d’octubre","de novembre","de desembre"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"],long:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"]},dayPeriods:{am:"a. m.",pm:"p. m."}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"],long:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"a. m.",pm:"p. m."}},roc:{months:{narrow:["GN","FB","MÇ","AB","MG","JN","JL","AG","ST","OC","NV","DS"],short:["gen.","febr.","març","abr.","maig","juny","jul.","ag.","set.","oct.","nov.","des."],long:["de gener","de febrer","de març","d’abril","de maig","de juny","de juliol","d’agost","de setembre","d’octubre","de novembre","de desembre"]},days:{narrow:["dg","dl","dt","dc","dj","dv","ds"],short:["dg.","dl.","dt.","dc.","dj.","dv.","ds."],long:["diumenge","dilluns","dimarts","dimecres","dijous","divendres","dissabte"]},eras:{narrow:["Before R.O.C.","R.O.C."],short:["Before R.O.C.","R.O.C."],long:["Before R.O.C.","R.O.C."]},dayPeriods:{am:"a. m.",pm:"p. m."}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{number} {currency}",negativePattern:"{minusSign}{number} {currency}"},percent:{positivePattern:"{number}{percentSign}",negativePattern:"{minusSign}{number}{percentSign}"}},symbols:{latn:{decimal:",",group:".",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{AUD:"AU$",CNY:"¥",ESP:"₧",EUR:"€",GBP:"£",HKD:"HK$",ILS:"₪",INR:"₹",JPY:"JP¥",KRW:"₩",NZD:"NZ$",THB:"฿",TWD:"NT$",VND:"₫",XAF:"FCFA",XOF:"CFA",XPF:"CFPF"}}});
 
 /***/ }),
-/* 104 */
+/* 103 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"nl",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1} {0}",medium:"{1} {0}",full:"{1} {0}",long:"{1} {0}",availableFormats:{"d":"d","E":"ccc",Ed:"E d",Ehm:"E h:mm a",EHm:"E HH:mm",Ehms:"E h:mm:ss a",EHms:"E HH:mm:ss",Gy:"y G",GyMMM:"MMM y G",GyMMMd:"d MMM y G",GyMMMEd:"E d MMM y G","h":"h a","H":"HH",hm:"h:mm a",Hm:"HH:mm",hms:"h:mm:ss a",Hms:"HH:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"HH:mm:ss v",hmv:"h:mm a v",Hmv:"HH:mm v","M":"L",Md:"d-M",MEd:"E d-M",MMM:"LLL",MMMd:"d MMM",MMMEd:"E d MMM",MMMMd:"d MMMM",ms:"mm:ss","y":"y",yM:"M-y",yMd:"d-M-y",yMEd:"E d-M-y",yMMM:"MMM y",yMMMd:"d MMM y",yMMMEd:"E d MMM y",yMMMM:"MMMM y",yQQQ:"QQQ y",yQQQQ:"QQQQ y"},dateFormats:{yMMMMEEEEd:"EEEE d MMMM y",yMMMMd:"d MMMM y",yMMMd:"d MMM y",yMd:"dd-MM-yy"},timeFormats:{hmmsszzzz:"HH:mm:ss zzzz",hmsz:"HH:mm:ss z",hms:"HH:mm:ss",hm:"HH:mm"}},calendars:{buddhist:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["jan.","feb.","mrt.","apr.","mei","jun.","jul.","aug.","sep.","okt.","nov.","dec."],long:["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["BE"],short:["BE"],long:["BE"]},dayPeriods:{am:"a.m.",pm:"p.m."}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["mnd 1","mnd 2","mnd 3","mnd 4","mnd 5","mnd 6","mnd 7","mnd 8","mnd 9","mnd 10","mnd 11","mnd 12"],long:["maand 1","maand 2","maand 3","maand 4","maand 5","maand 6","maand 7","maand 8","maand 9","maand 10","maand 11","maand 12"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},dayPeriods:{am:"a.m.",pm:"p.m."}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Tut","Babah","Hatur","Kiyahk","Tubah","Amshir","Baramhat","Baramundah","Bashans","Ba’unah","Abib","Misra","Nasi"],long:["Tut","Babah","Hatur","Kiyahk","Tubah","Amshir","Baramhat","Baramundah","Bashans","Ba’unah","Abib","Misra","Nasi"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a.m.",pm:"p.m."}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["mnd 1","mnd 2","mnd 3","mnd 4","mnd 5","mnd 6","mnd 7","mnd 8","mnd 9","mnd 10","mnd 11","mnd 12"],long:["maand 1","maand 2","maand 3","maand 4","maand 5","maand 6","maand 7","maand 8","maand 9","maand 10","maand 11","maand 12"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},dayPeriods:{am:"a.m.",pm:"p.m."}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Mäskäräm","Teqemt","Hedar","Tahsas","T’er","Yäkatit","Mägabit","Miyazya","Genbot","Säne","Hamle","Nähase","Pagumän"],long:["Mäskäräm","Teqemt","Hedar","Tahsas","T’er","Yäkatit","Mägabit","Miyazya","Genbot","Säne","Hamle","Nähase","Pagumän"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a.m.",pm:"p.m."}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Mäskäräm","Teqemt","Hedar","Tahsas","T’er","Yäkatit","Mägabit","Miyazya","Genbot","Säne","Hamle","Nähase","Pagumän"],long:["Mäskäräm","Teqemt","Hedar","Tahsas","T’er","Yäkatit","Mägabit","Miyazya","Genbot","Säne","Hamle","Nähase","Pagumän"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"a.m.",pm:"p.m."}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"a.m.",pm:"p.m."}},gregory:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["jan.","feb.","mrt.","apr.","mei","jun.","jul.","aug.","sep.","okt.","nov.","dec."],long:["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["v.C.","n.C.","vgj","gj"],short:["v.Chr.","n.Chr.","v.g.j.","g.j."],long:["voor Christus","na Christus","vóór gewone jaartelling","gewone jaartelling"]},dayPeriods:{am:"a.m.",pm:"p.m."}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Tisjrie","Chesjwan","Kislev","Tevet","Sjevat","Adar A","Adar","Nisan","Ijar","Sivan","Tammoez","Av","Elloel","Adar B"],long:["Tisjrie","Chesjwan","Kislev","Tevet","Sjevat","Adar A","Adar","Nisan","Ijar","Sivan","Tammoez","Av","Elloel","Adar B"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"a.m.",pm:"p.m."}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Chaitra","Vaishakha","Jyeshtha","Aashaadha","Shraavana","Bhaadrapada","Ashvina","Kaartika","Agrahayana","Pausha","Maagha","Phaalguna"],long:["Chaitra","Vaishakha","Jyeshtha","Aashaadha","Shraavana","Bhaadrapada","Ashvina","Kaartika","Agrahayana","Pausha","Maagha","Phaalguna"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["SAKA"],short:["SAKA"],long:["SAKA"]},dayPeriods:{am:"a.m.",pm:"p.m."}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Moeh.","Saf.","Rab. I","Rab. II","Joem. I","Joem. II","Raj.","Sja.","Ram.","Sjaw.","Doe al k.","Doe al h."],long:["Moeharram","Safar","Rabiʻa al awal","Rabiʻa al thani","Joemadʻal awal","Joemadʻal thani","Rajab","Sjaʻaban","Ramadan","Sjawal","Doe al kaʻaba","Doe al hizja"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["Saʻna Hizjria"],short:["Saʻna Hizjria"],long:["Saʻna Hizjria"]},dayPeriods:{am:"a.m.",pm:"p.m."}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Moeh.","Saf.","Rab. I","Rab. II","Joem. I","Joem. II","Raj.","Sja.","Ram.","Sjaw.","Doe al k.","Doe al h."],long:["Moeharram","Safar","Rabiʻa al awal","Rabiʻa al thani","Joemadʻal awal","Joemadʻal thani","Rajab","Sjaʻaban","Ramadan","Sjawal","Doe al kaʻaba","Doe al hizja"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["Saʻna Hizjria"],short:["Saʻna Hizjria"],long:["Saʻna Hizjria"]},dayPeriods:{am:"a.m.",pm:"p.m."}},japanese:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["jan.","feb.","mrt.","apr.","mei","jun.","jul.","aug.","sep.","okt.","nov.","dec."],long:["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kaho (1094–1096)","Eichō (1096–1097)","Shōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen-ei (1118-1120)","Hoan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hoen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hogen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken-ei (1206-1207)","Shōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Shōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tempuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En-ō (1239-1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun-ō (1260-1261)","Kōchō (1261–1264)","Bun-ei (1264-1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkei (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkyō (1321–1324)","Shōchū (1324–1326)","Kareki (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kemmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun-an (1444-1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenmon (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genwa (1615–1624)","Kan-ei (1624-1644)","Shōho (1644–1648)","Keian (1648–1652)","Shōō (1652–1655)","Meiryaku (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenwa (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan-en (1748-1751)","Hōryaku (1751–1764)","Meiwa (1764–1772)","An-ei (1772-1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man-en (1860-1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"],long:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kaho (1094–1096)","Eichō (1096–1097)","Shōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen-ei (1118-1120)","Hoan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hoen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hogen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken-ei (1206-1207)","Shōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Shōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tempuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En-ō (1239-1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun-ō (1260-1261)","Kōchō (1261–1264)","Bun-ei (1264-1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkei (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkyō (1321–1324)","Shōchū (1324–1326)","Kareki (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kemmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun-an (1444-1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenmon (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genwa (1615–1624)","Kan-ei (1624-1644)","Shōho (1644–1648)","Keian (1648–1652)","Shōō (1652–1655)","Meiryaku (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenwa (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan-en (1748-1751)","Hōryaku (1751–1764)","Meiwa (1764–1772)","An-ei (1772-1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man-en (1860-1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"]},dayPeriods:{am:"a.m.",pm:"p.m."}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"],long:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"a.m.",pm:"p.m."}},roc:{months:{narrow:["J","F","M","A","M","J","J","A","S","O","N","D"],short:["jan.","feb.","mrt.","apr.","mei","jun.","jul.","aug.","sep.","okt.","nov.","dec."],long:["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"]},days:{narrow:["Z","M","D","W","D","V","Z"],short:["zo","ma","di","wo","do","vr","za"],long:["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"]},eras:{narrow:["voor R.O.C.","Minguo"],short:["voor R.O.C.","Minguo"],long:["voor R.O.C.","Minguo"]},dayPeriods:{am:"a.m.",pm:"p.m."}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{currency} {number}",negativePattern:"{currency} {minusSign}{number}"},percent:{positivePattern:"{number}{percentSign}",negativePattern:"{minusSign}{number}{percentSign}"}},symbols:{latn:{decimal:",",group:".",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{AUD:"AU$",BRL:"R$",CAD:"C$",CNY:"CN¥",EUR:"€",FJD:"FJ$",GBP:"£",HKD:"HK$",ILS:"₪",INR:"₹",JPY:"JP¥",KRW:"₩",MXN:"MX$",NZD:"NZ$",SBD:"SI$",THB:"฿",TWD:"NT$",USD:"US$",VND:"₫",XAF:"FCFA",XCD:"EC$",XOF:"CFA"}}});
 
 /***/ }),
-/* 105 */
+/* 104 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"it",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1}, {0}",medium:"{1}, {0}",full:"{1} {0}",long:"{1} {0}",availableFormats:{"d":"d","E":"ccc",Ed:"E d",Ehm:"E h:mm a",EHm:"E HH:mm",Ehms:"E h:mm:ss a",EHms:"E HH:mm:ss",Gy:"y G",GyMMM:"MMM y G",GyMMMd:"d MMM y G",GyMMMEd:"E d MMM y G","h":"h a","H":"HH",hm:"h:mm a",Hm:"HH:mm",hms:"h:mm:ss a",Hms:"HH:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"HH:mm:ss v",hmv:"h:mm a v",Hmv:"HH:mm v","M":"L",Md:"d/M",MEd:"E d/M",MMM:"LLL",MMMd:"d MMM",MMMEd:"E d MMM",MMMMd:"d MMMM",ms:"mm:ss","y":"y",yM:"M/y",yMd:"d/M/y",yMEd:"E d/M/y",yMMM:"MMM y",yMMMd:"d MMM y",yMMMEd:"E d MMM y",yMMMM:"MMMM y",yQQQ:"QQQ y",yQQQQ:"QQQQ y"},dateFormats:{yMMMMEEEEd:"EEEE d MMMM y",yMMMMd:"d MMMM y",yMMMd:"dd MMM y",yMd:"dd/MM/yy"},timeFormats:{hmmsszzzz:"HH:mm:ss zzzz",hmsz:"HH:mm:ss z",hms:"HH:mm:ss",hm:"HH:mm"}},calendars:{buddhist:{months:{narrow:["G","F","M","A","M","G","L","A","S","O","N","D"],short:["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"],long:["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["EB"],short:["EB"],long:["EB"]},dayPeriods:{am:"AM",pm:"PM"}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},dayPeriods:{am:"AM",pm:"PM"}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"],long:["Tout","Baba","Hator","Kiahk","Toba","Amshir","Baramhat","Baramouda","Bashans","Paona","Epep","Mesra","Nasie"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},dayPeriods:{am:"AM",pm:"PM"}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"],long:["Meskerem","Tekemt","Hedar","Tahsas","Ter","Yekatit","Megabit","Miazia","Genbot","Sene","Hamle","Nehasse","Pagumen"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"AM",pm:"PM"}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"AM",pm:"PM"}},gregory:{months:{narrow:["G","F","M","A","M","G","L","A","S","O","N","D"],short:["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"],long:["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["aC","dC","BCE","CE"],short:["a.C.","d.C.","a.E.V.","E.V."],long:["a.C.","d.C.","avanti Era Volgare","Era Volgare"]},dayPeriods:{am:"AM",pm:"PM"}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"],long:["Tishri","Heshvan","Kislev","Tevet","Shevat","Adar I","Adar","Nisan","Iyar","Sivan","Tamuz","Av","Elul","Adar II"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"AM",pm:"PM"}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"],long:["Chaitra","Vaisakha","Jyaistha","Asadha","Sravana","Bhadra","Asvina","Kartika","Agrahayana","Pausa","Magha","Phalguna"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["Saka"],short:["Saka"],long:["Saka"]},dayPeriods:{am:"AM",pm:"PM"}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"AM",pm:"PM"}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Muh.","Saf.","Rab. I","Rab. II","Jum. I","Jum. II","Raj.","Sha.","Ram.","Shaw.","Dhuʻl-Q.","Dhuʻl-H."],long:["Muharram","Safar","Rabiʻ I","Rabiʻ II","Jumada I","Jumada II","Rajab","Shaʻban","Ramadan","Shawwal","Dhuʻl-Qiʻdah","Dhuʻl-Hijjah"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"AM",pm:"PM"}},japanese:{months:{narrow:["G","F","M","A","M","G","L","A","S","O","N","D"],short:["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"],long:["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"],long:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","Meiji","Taishō","Shōwa","Heisei"]},dayPeriods:{am:"AM",pm:"PM"}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"],long:["Farvardin","Ordibehesht","Khordad","Tir","Mordad","Shahrivar","Mehr","Aban","Azar","Dey","Bahman","Esfand"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"AM",pm:"PM"}},roc:{months:{narrow:["G","F","M","A","M","G","L","A","S","O","N","D"],short:["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"],long:["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"]},days:{narrow:["D","L","M","M","G","V","S"],short:["dom","lun","mar","mer","gio","ven","sab"],long:["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"]},eras:{narrow:["Prima di R.O.C.","Minguo"],short:["Prima di R.O.C.","Minguo"],long:["Prima di R.O.C.","Minguo"]},dayPeriods:{am:"AM",pm:"PM"}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{number} {currency}",negativePattern:"{minusSign}{number} {currency}"},percent:{positivePattern:"{number}{percentSign}",negativePattern:"{minusSign}{number}{percentSign}"}},symbols:{latn:{decimal:",",group:".",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{AUD:"A$",CAD:"CA$",CNY:"CN¥",EUR:"€",GBP:"£",ILS:"₪",INR:"₹",NZD:"NZ$",THB:"฿",USD:"US$",VND:"₫",XAF:"FCFA",XCD:"EC$",XOF:"CFA",XPF:"CFPF"}}});
 
 /***/ }),
-/* 106 */
+/* 105 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"th",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1} {0}",medium:"{1} {0}",full:"{1} {0}",long:"{1} {0}",availableFormats:{"d":"d","E":"ccc",Ed:"E d",Ehm:"E h:mm a",EHm:"E HH:mm น.",Ehms:"E h:mm:ss a",EHms:"E HH:mm:ss",Gy:"G y",GyMMM:"MMM G y",GyMMMd:"d MMM G y",GyMMMEd:"E d MMM G y",GyMMMEEEEd:"EEEEที่ d MMM G y","h":"h a","H":"HH",hm:"h:mm a",Hm:"HH:mm น.",hms:"h:mm:ss a",Hms:"HH:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"HH:mm:ss v",hmv:"h:mm a v",Hmv:"HH:mm v","M":"L",Md:"d/M",MEd:"E d/M",MMM:"LLL",MMMd:"d MMM",MMMEd:"E d MMM",MMMEEEEd:"EEEEที่ d MMM",MMMMd:"d MMMM",MMMMEd:"E d MMMM",MMMMEEEEd:"EEEEที่ d MMMM",mmss:"mm:ss",ms:"mm:ss","y":"y",yM:"M/y",yMd:"d/M/y",yMEd:"E d/M/y",yMMM:"MMM y",yMMMd:"d MMM y",yMMMEd:"E d MMM y",yMMMEEEEd:"EEEEที่ d MMM y",yMMMM:"MMMM G y",yMMMMd:"d MMMM G y",yMMMMEd:"E d MMMM G y",yMMMMEEEEd:"EEEEที่ d MMMM G y",yQQQ:"QQQ y",yQQQQ:"QQQQ G y"},dateFormats:{yMMMMEEEEd:"EEEEที่ d MMMM G y",yMMMMd:"d MMMM G y",yMMMd:"d MMM y",yMd:"d/M/yy"},timeFormats:{hmmsszzzz:"H นาฬิกา mm นาที ss วินาที zzzz",hmsz:"H นาฬิกา mm นาที ss วินาที z",hms:"HH:mm:ss",hm:"HH:mm"}},calendars:{buddhist:{months:{narrow:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],short:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],long:["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["พ.ศ."],short:["พ.ศ."],long:["พุทธศักราช"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1","2","3","4","5","6","7","8","9","10","11","12"],long:["1","2","3","4","5","6","7","8","9","10","11","12"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["เทาท์","บาบา","ฮาเทอร์","เคียฟ","โทบา","อัมเชอร์","บารัมฮัท","บาราเมาดา","บาชันส์","พาโอนา","อีเปป","เมสรา","นาซี"],long:["เทาท์","บาบา","ฮาเทอร์","เคียฟ","โทบา","อัมเชอร์","บารัมฮัท","บาราเมาดา","บาชันส์","พาโอนา","อีเปป","เมสรา","นาซี"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1","2","3","4","5","6","7","8","9","10","11","12"],long:["1","2","3","4","5","6","7","8","9","10","11","12"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["เมสเคอเรม","เตเกมท","เฮดาร์","ทาฮ์ซัส","เทอร์","เยคาทิท","เมกาบิต","เมียเซีย","เจนบอต","เซเน","ฮัมเล","เนแฮซ","พากูเมน"],long:["เมสเคอเรม","เตเกมท","เฮดาร์","ทาฮ์ซัส","เทอร์","เยคาทิท","เมกาบิต","เมียเซีย","เจนบอต","เซเน","ฮัมเล","เนแฮซ","พากูเมน"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["เมสเคอเรม","เตเกมท","เฮดาร์","ทาฮ์ซัส","เทอร์","เยคาทิท","เมกาบิต","เมียเซีย","เจนบอต","เซเน","ฮัมเล","เนแฮซ","พากูเมน"],long:["เมสเคอเรม","เตเกมท","เฮดาร์","ทาฮ์ซัส","เทอร์","เยคาทิท","เมกาบิต","เมียเซีย","เจนบอต","เซเน","ฮัมเล","เนแฮซ","พากูเมน"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},gregory:{months:{narrow:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],short:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],long:["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ก่อน ค.ศ.","ค.ศ.","ก.ส.ศ.","ส.ศ."],short:["ปีก่อน ค.ศ.","ค.ศ.","ก.ส.ศ.","ส.ศ."],long:["ปีก่อนคริสต์ศักราช","คริสต์ศักราช","ก่อนสามัญศักราช","สามัญศักราช"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["ทิชรี","เฮวาน","กีสเลฟ","เตเวต","เชวัต","อาดาร์ I","อาดาร์","นิสซาน","อิยาร์","สีวัน","ตามูซ","อัฟ","เอลอุล","อาดาร์ II"],long:["ทิชรี","เฮวาน","กีสเลฟ","เตเวต","เชวัต","อาดาร์ I","อาดาร์","นิสซาน","อิยาร์","สีวัน","ตามูซ","อัฟ","เอลอุล","อาดาร์ II"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ย.ศ."],short:["ย.ศ."],long:["ย.ศ."]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["จิตรา","วิสาขา","เชษฐา","อัษฎา","ศรวณา","พัตรา","อัศวิชา","การติกา","มฤคศิรา","ปุษยา","มาฆะ","ผลคุณี"],long:["จิตรา","วิสาขา","เชษฐา","อัษฎา","ศรวณา","พัตรา","อัศวิชา","การติกา","มฤคศิรา","ปุษยา","มาฆะ","ผลคุณี"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ม.ศ."],short:["ม.ศ."],long:["ม.ศ."]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["มุฮัร.","เศาะ.","รอบี I","รอบี II","จุมาดา I","จุมาดา II","เราะ.","ชะอ์.","เราะมะ.","เชาว.","ซุลกิอฺ.","ซุลหิจ."],long:["มุฮะร์รอม","ซอฟาร์","รอบี I","รอบี II","จุมาดา I","จุมาดา II","รอจับ","ชะอะบาน","รอมะดอน","เชาวัล","ซุลกิอฺดะฮฺ","ซุลหิจญะฮฺ"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ฮ.ศ."],short:["ฮ.ศ."],long:["ฮิจเราะห์ศักราช"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["มุฮัร.","เศาะ.","รอบี I","รอบี II","จุมาดา I","จุมาดา II","เราะ.","ชะอ์.","เราะมะ.","เชาว.","ซุลกิอฺ.","ซุลหิจ."],long:["มุฮะร์รอม","ซอฟาร์","รอบี I","รอบี II","จุมาดา I","จุมาดา II","รอจับ","ชะอะบาน","รอมะดอน","เชาวัล","ซุลกิอฺดะฮฺ","ซุลหิจญะฮฺ"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ฮ.ศ."],short:["ฮ.ศ."],long:["ฮิจเราะห์ศักราช"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},japanese:{months:{narrow:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],short:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],long:["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["ทะอิกะ (645–650)","ฮะกุชิ (650–671)","ฮากุโฮ (672–686)","ชุโช (686–701)","ทะอิโฮ (701–704)","เคอุง (704–708)","วะโด (708–715)","เรกิ (715–717)","โยโร (717–724)","จิงกิ (724–729)","เท็มเพียว (729–749)","เท็มเพียว-คัมโป (749-749)","เท็มเพียว-โชโฮ (749-757)","เท็มเพียว-โฮจิ (757-765)","เท็มเพียว-จิงโงะ (765-767)","จิงโงะ-เคอุง (767-770)","โฮกิ (770–780)","เท็นโอ (781–782)","เอ็นเรียะกุ (782–806)","ดะอิโด (806–810)","โคนิง (810–824)","เท็นโช (824–834)","โชวะ (834–848)","คะโจ (848–851)","นินจุ (851–854)","ซะอิโกะ (854–857)","เท็นนัง (857–859)","โจงัง (859–877)","เก็งเก (877–885)","นินนะ (885–889)","คัมเพียว (889–898)","โชตะอิ (898–901)","เอ็งงิ (901–923)","เอ็นโช (923–931)","โชเฮ (931–938)","เท็งเงียว (938–947)","เท็นเรียะกุ (947–957)","เท็นโตะกุ (957–961)","โอวะ (961–964)","โคโฮ (964–968)","อันนะ (968–970)","เท็นโระกุ (970–973)","เท็นเอ็ง (973–976)","โจเง็ง (976–978)","เท็งเง็ง (978–983)","เอกัง (983–985)","คันนะ (985–987)","เอเอ็ง (987–989)","เอโซ (989–990)","โชเรียะกุ (990–995)","โชโตะกุ (995–999)","โชโฮ (999–1004)","คันโก (1004–1012)","โชวะ (1012–1017)","คันนิง (1017–1021)","จิอัง (1021–1024)","มันจุ (1024–1028)","โชเง็ง (1028–1037)","โชเรียะกุ (1037–1040)","โชคีว (1040–1044)","คันโตะกุ (1044–1046)","เอโช (1046–1053)","เท็งงิ (1053–1058)","โคเฮ (1058–1065)","จิเรียะกุ (1065–1069)","เอ็งคีว (1069–1074)","โชโฮ (1074–1077)","โชเรียะกุ (1077–1081)","เอโฮะ (1081–1084)","โอโตะกุ (1084–1087)","คันจิ (1087–1094)","คะโฮะ (1094–1096)","เอโช (1096–1097)","โชโตะกุ (1097–1099)","โควะ (1099–1104)","โชจิ (1104–1106)","คะโช (1106–1108)","เท็นนิง (1108–1110)","เท็นเอ (1110–1113)","เอกีว (1113–1118)","เก็นเอ (1118–1120)","โฮะอัง (1120–1124)","เท็นจิ (1124–1126)","ดะอิจิ (1126–1131)","เท็นโช (1131–1132)","โชโช (1132–1135)","โฮะเอ็ง (1135–1141)","เอจิ (1141–1142)","โคจิ (1142–1144)","เท็นโย (1144–1145)","คีวอัง (1145–1151)","นิมเป (1151–1154)","คีวจุ (1154–1156)","โฮะเง็ง (1156–1159)","เฮจิ (1159–1160)","เอเรียะกุ (1160–1161)","โอโฮ (1161–1163)","โชกัง (1163–1165)","เอมัง (1165–1166)","นินอัง (1166–1169)","คะโอ (1169–1171)","โชอัง (1171–1175)","อังเง็ง (1175–1177)","จิโช (1177–1181)","โยวะ (1181–1182)","จุเอ (1182–1184)","เก็นเรียะกุ (1184–1185)","บุนจิ (1185–1190)","เค็งกีว (1190–1199)","โชจิ (1199–1201)","เค็นนิง (1201–1204)","เก็งกีว (1204–1206)","เค็นเอ (1206–1207)","โชเก็ง (1207–1211)","เค็นเรียะกุ (1211–1213)","เค็มโป (1213–1219)","โชกีว (1219–1222)","โจโอ (1222–1224)","เก็นนิง (1224–1225)","คะโระกุ (1225–1227)","อันเต (1227–1229)","คังกิ (1229–1232)","โจเอ (1232–1233)","เท็มปุกุ (1233–1234)","บุนเรียะกุ (1234–1235)","คะเต (1235–1238)","เรียะกุนิง (1238–1239)","เอ็นโอ (1239–1240)","นินจิ (1240–1243)","คังเง็ง (1243–1247)","โฮจิ (1247–1249)","เค็นโช (1249–1256)","โคเง็ง (1256–1257)","โชกะ (1257–1259)","โชเง็ง (1259–1260)","บุนโอ (1260–1261)","โคโช (1261–1264)","บุนเอ (1264–1275)","เค็นจิ (1275–1278)","โคอัง (1278–1288)","โชโอ (1288–1293)","เอนิง (1293–1299)","โชอัง (1299–1302)","เค็งเง็ง (1302–1303)","คะเง็ง (1303–1306)","โทะกุจิ (1306–1308)","เอ็งเก (1308–1311)","โอโช (1311–1312)","โชวะ (1312–1317)","บุมโป (1317–1319)","เก็นโอ (1319–1321)","เก็งเกียว (1321–1324)","โชชู (1324–1326)","คะเระกิ (1326–1329)","เก็นโตะกุ (1329–1331)","เก็งโก (1331–1334)","เค็มมุ (1334–1336)","เอ็งเง็ง (1336–1340)","โคโกะกุ (1340–1346)","โชเฮ (1346–1370)","เค็นโตะกุ (1370–1372)","บุนชู (1372–1375)","เท็นจุ (1375–1379)","โคเรียะกุ (1379–1381)","โควะ (1381–1384)","เก็นชู (1384–1392)","เมโตะกุ (1384–1387)","คะเค (1387–1389)","โคโอ (1389–1390)","เมโตะกุ (1390–1394)","โอเอ (1394–1428)","โชโช (1428–1429)","เอเกียว (1429–1441)","คะกิสึ (1441–1444)","บุนอัง (1444–1449)","โฮโตะกุ (1449–1452)","เคียวโตะกุ (1452–1455)","โคโช (1455–1457)","โชโระกุ (1457–1460)","คันโช (1460–1466)","บุนโช (1466–1467)","โอนิง (1467–1469)","บุมเม (1469–1487)","โชเกียว (1487–1489)","เอ็นโตะกุ (1489–1492)","เมโอ (1492–1501)","บุงกิ (1501–1504)","เอโช (1504–1521)","ทะอิเอ (1521–1528)","เคียวโระกุ (1528–1532)","เท็มมน (1532–1555)","โคจิ (1555–1558)","เอโระกุ (1558–1570)","เก็งกิ (1570–1573)","เท็นโช (1573–1592)","บุนโระกุ (1592–1596)","เคโช (1596–1615)","เก็งวะ (1615–1624)","คันเอ (1624–1644)","โชโฮ (1644–1648)","เคอัง (1648–1652)","โชโอ (1652–1655)","เมเรียะกุ (1655–1658)","มันจิ (1658–1661)","คัมบุง (1661–1673)","เอ็มโป (1673–1681)","เท็นวะ (1681–1684)","โจเกียว (1684–1688)","เก็นโระกุ (1688–1704)","โฮเอ (1704–1711)","โชโตะกุ (1711–1716)","เคียวโฮ (1716–1736)","เก็มบุง (1736–1741)","คัมโป (1741–1744)","เอ็งเกียว (1744–1748)","คันเอ็ง (1748–1751)","โฮเรียะกุ (1751–1764)","เมวะ (1764–1772)","อันเอ (1772–1781)","เท็มเม (1781–1789)","คันเซ (1789–1801)","เคียววะ (1801–1804)","บุงกะ (1804–1818)","บุนเซ (1818–1830)","เท็มโป (1830–1844)","โคกะ (1844–1848)","คะเอ (1848–1854)","อันเซ (1854–1860)","มันเอ็ง (1860–1861)","บุงกีว (1861–1864)","เก็นจิ (1864–1865)","เคโอ (1865–1868)","เมจิ","ทะอิโช","โชวะ","เฮเซ"],long:["ทะอิกะ (645–650)","ฮะกุชิ (650–671)","ฮากุโฮ (672–686)","ชุโช (686–701)","ทะอิโฮ (701–704)","เคอุง (704–708)","วะโด (708–715)","เรกิ (715–717)","โยโร (717–724)","จิงกิ (724–729)","เท็มเพียว (729–749)","เท็มเพียว-คัมโป (749-749)","เท็มเพียว-โชโฮ (749-757)","เท็มเพียว-โฮจิ (757-765)","เท็มเพียว-จิงโงะ (765-767)","จิงโงะ-เคอุง (767-770)","โฮกิ (770–780)","เท็นโอ (781–782)","เอ็นเรียะกุ (782–806)","ดะอิโด (806–810)","โคนิง (810–824)","เท็นโช (824–834)","โชวะ (834–848)","คะโจ (848–851)","นินจุ (851–854)","ซะอิโกะ (854–857)","เท็นนัง (857–859)","โจงัง (859–877)","เก็งเก (877–885)","นินนะ (885–889)","คัมเพียว (889–898)","โชตะอิ (898–901)","เอ็งงิ (901–923)","เอ็นโช (923–931)","โชเฮ (931–938)","เท็งเงียว (938–947)","เท็นเรียะกุ (947–957)","เท็นโตะกุ (957–961)","โอวะ (961–964)","โคโฮ (964–968)","อันนะ (968–970)","เท็นโระกุ (970–973)","เท็นเอ็ง (973–976)","โจเง็ง (976–978)","เท็งเง็ง (978–983)","เอกัง (983–985)","คันนะ (985–987)","เอเอ็ง (987–989)","เอโซ (989–990)","โชเรียะกุ (990–995)","โชโตะกุ (995–999)","โชโฮ (999–1004)","คันโก (1004–1012)","โชวะ (1012–1017)","คันนิง (1017–1021)","จิอัง (1021–1024)","มันจุ (1024–1028)","โชเง็ง (1028–1037)","โชเรียะกุ (1037–1040)","โชคีว (1040–1044)","คันโตะกุ (1044–1046)","เอโช (1046–1053)","เท็งงิ (1053–1058)","โคเฮ (1058–1065)","จิเรียะกุ (1065–1069)","เอ็งคีว (1069–1074)","โชโฮ (1074–1077)","โชเรียะกุ (1077–1081)","เอโฮะ (1081–1084)","โอโตะกุ (1084–1087)","คันจิ (1087–1094)","คะโฮะ (1094–1096)","เอโช (1096–1097)","โชโตะกุ (1097–1099)","โควะ (1099–1104)","โชจิ (1104–1106)","คะโช (1106–1108)","เท็นนิง (1108–1110)","เท็นเอ (1110–1113)","เอกีว (1113–1118)","เก็นเอ (1118–1120)","โฮะอัง (1120–1124)","เท็นจิ (1124–1126)","ดะอิจิ (1126–1131)","เท็นโช (1131–1132)","โชโช (1132–1135)","โฮะเอ็ง (1135–1141)","เอจิ (1141–1142)","โคจิ (1142–1144)","เท็นโย (1144–1145)","คีวอัง (1145–1151)","นิมเป (1151–1154)","คีวจุ (1154–1156)","โฮะเง็ง (1156–1159)","เฮจิ (1159–1160)","เอเรียะกุ (1160–1161)","โอโฮ (1161–1163)","โชกัง (1163–1165)","เอมัง (1165–1166)","นินอัง (1166–1169)","คะโอ (1169–1171)","โชอัง (1171–1175)","อังเง็ง (1175–1177)","จิโช (1177–1181)","โยวะ (1181–1182)","จุเอ (1182–1184)","เก็นเรียะกุ (1184–1185)","บุนจิ (1185–1190)","เค็งกีว (1190–1199)","โชจิ (1199–1201)","เค็นนิง (1201–1204)","เก็งกีว (1204–1206)","เค็นเอ (1206–1207)","โชเก็ง (1207–1211)","เค็นเรียะกุ (1211–1213)","เค็มโป (1213–1219)","โชกีว (1219–1222)","โจโอ (1222–1224)","เก็นนิง (1224–1225)","คะโระกุ (1225–1227)","อันเต (1227–1229)","คังกิ (1229–1232)","โจเอ (1232–1233)","เท็มปุกุ (1233–1234)","บุนเรียะกุ (1234–1235)","คะเต (1235–1238)","เรียะกุนิง (1238–1239)","เอ็นโอ (1239–1240)","นินจิ (1240–1243)","คังเง็ง (1243–1247)","โฮจิ (1247–1249)","เค็นโช (1249–1256)","โคเง็ง (1256–1257)","โชกะ (1257–1259)","โชเง็ง (1259–1260)","บุนโอ (1260–1261)","โคโช (1261–1264)","บุนเอ (1264–1275)","เค็นจิ (1275–1278)","โคอัง (1278–1288)","โชโอ (1288–1293)","เอนิง (1293–1299)","โชอัง (1299–1302)","เค็งเง็ง (1302–1303)","คะเง็ง (1303–1306)","โทะกุจิ (1306–1308)","เอ็งเก (1308–1311)","โอโช (1311–1312)","โชวะ (1312–1317)","บุมโป (1317–1319)","เก็นโอ (1319–1321)","เก็งเกียว (1321–1324)","โชชู (1324–1326)","คะเระกิ (1326–1329)","เก็นโตะกุ (1329–1331)","เก็งโก (1331–1334)","เค็มมุ (1334–1336)","เอ็งเง็ง (1336–1340)","โคโกะกุ (1340–1346)","โชเฮ (1346–1370)","เค็นโตะกุ (1370–1372)","บุนชู (1372–1375)","เท็นจุ (1375–1379)","โคเรียะกุ (1379–1381)","โควะ (1381–1384)","เก็นชู (1384–1392)","เมโตะกุ (1384–1387)","คะเค (1387–1389)","โคโอ (1389–1390)","เมโตะกุ (1390–1394)","โอเอ (1394–1428)","โชโช (1428–1429)","เอเกียว (1429–1441)","คะกิสึ (1441–1444)","บุนอัง (1444–1449)","โฮโตะกุ (1449–1452)","เคียวโตะกุ (1452–1455)","โคโช (1455–1457)","โชโระกุ (1457–1460)","คันโช (1460–1466)","บุนโช (1466–1467)","โอนิง (1467–1469)","บุมเม (1469–1487)","โชเกียว (1487–1489)","เอ็นโตะกุ (1489–1492)","เมโอ (1492–1501)","บุงกิ (1501–1504)","เอโช (1504–1521)","ทะอิเอ (1521–1528)","เคียวโระกุ (1528–1532)","เท็มมน (1532–1555)","โคจิ (1555–1558)","เอโระกุ (1558–1570)","เก็งกิ (1570–1573)","เท็นโช (1573–1592)","บุนโระกุ (1592–1596)","เคโช (1596–1615)","เก็งวะ (1615–1624)","คันเอ (1624–1644)","โชโฮ (1644–1648)","เคอัง (1648–1652)","โชโอ (1652–1655)","เมเรียะกุ (1655–1658)","มันจิ (1658–1661)","คัมบุง (1661–1673)","เอ็มโป (1673–1681)","เท็นวะ (1681–1684)","โจเกียว (1684–1688)","เก็นโระกุ (1688–1704)","โฮเอ (1704–1711)","โชโตะกุ (1711–1716)","เคียวโฮ (1716–1736)","เก็มบุง (1736–1741)","คัมโป (1741–1744)","เอ็งเกียว (1744–1748)","คันเอ็ง (1748–1751)","โฮเรียะกุ (1751–1764)","เมวะ (1764–1772)","อันเอ (1772–1781)","เท็มเม (1781–1789)","คันเซ (1789–1801)","เคียววะ (1801–1804)","บุงกะ (1804–1818)","บุนเซ (1818–1830)","เท็มโป (1830–1844)","โคกะ (1844–1848)","คะเอ (1848–1854)","อันเซ (1854–1860)","มันเอ็ง (1860–1861)","บุงกีว (1861–1864)","เก็นจิ (1864–1865)","เคโอ (1865–1868)","เมจิ","ทะอิโช","โชวะ","เฮเซ"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["ฟาร์วาร์ดิน","ออร์ดิเบเฮชต์","คอร์แดด","เตอร์","มอร์แดด","ชาหริวาร์","เมฮร์","อะบาน","อะซาร์","เดย์","บาฮ์มาน","เอสฟานด์"],long:["ฟาร์วาร์ดิน","ออร์ดิเบเฮชต์","คอร์แดด","เตอร์","มอร์แดด","ชาหริวาร์","เมฮร์","อะบาน","อะซาร์","เดย์","บาฮ์มาน","เอสฟานด์"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ปีเปอร์เซีย"],short:["ปีเปอร์เซีย"],long:["ปีเปอร์เซีย"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}},roc:{months:{narrow:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],short:["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."],long:["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"]},days:{narrow:["อา","จ","อ","พ","พฤ","ศ","ส"],short:["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."],long:["วันอาทิตย์","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์"]},eras:{narrow:["ปีก่อนไต้หวัน","ไต้หวัน"],short:["ปีก่อนไต้หวัน","ไต้หวัน"],long:["ปีก่อนไต้หวัน","ไต้หวัน"]},dayPeriods:{am:"ก่อนเที่ยง",pm:"หลังเที่ยง"}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{currency}{number}",negativePattern:"{minusSign}{currency}{number}"},percent:{positivePattern:"{number}{percentSign}",negativePattern:"{minusSign}{number}{percentSign}"}},symbols:{latn:{decimal:".",group:",",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"},thai:{decimal:".",group:",",nan:"NaN",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{AUD:"AU$",BRL:"R$",CAD:"CA$",CNY:"CN¥",EUR:"€",GBP:"£",HKD:"HK$",ILS:"₪",INR:"₹",JPY:"¥",KRW:"₩",MXN:"MX$",NZD:"NZ$",TWD:"NT$",USD:"US$",VND:"₫",XAF:"FCFA",XCD:"EC$",XOF:"CFA",XPF:"CFPF"}}});
 
 /***/ }),
-/* 107 */
+/* 106 */
 /***/ (function(module, exports) {
 
 	IntlPolyfill.__addLocaleData({locale:"ru",date:{ca:["gregory","buddhist","chinese","coptic","dangi","ethioaa","ethiopic","generic","hebrew","indian","islamic","islamicc","japanese","persian","roc"],hourNo0:true,hour12:false,formats:{short:"{1}, {0}",medium:"{1}, {0}",full:"{1}, {0}",long:"{1}, {0}",availableFormats:{"d":"d","E":"ccc",Ed:"ccc, d",Ehm:"E h:mm a",EHm:"E HH:mm",Ehms:"E h:mm:ss a",EHms:"E HH:mm:ss",Gy:"y 'г'. G",GyMMM:"LLL y G",GyMMMd:"d MMM y 'г'. G",GyMMMEd:"E, d MMM y 'г'. G","h":"h a","H":"H",hm:"h:mm a",Hm:"H:mm",hms:"h:mm:ss a",Hms:"H:mm:ss",hmsv:"h:mm:ss a v",Hmsv:"H:mm:ss v",hmv:"h:mm a v",Hmv:"H:mm v","M":"L",Md:"dd.MM",MEd:"E, dd.MM",MMdd:"dd.MM",MMM:"LLL",MMMd:"d MMM",MMMEd:"ccc, d MMM",MMMMd:"d MMMM",ms:"mm:ss","y":"y",yM:"MM.y",yMd:"dd.MM.y",yMEd:"ccc, d.MM.y 'г'.",yMM:"MM.y",yMMM:"LLL y 'г'.",yMMMd:"d MMM y 'г'.",yMMMEd:"E, d MMM y 'г'.",yMMMM:"LLLL y 'г'.",yQQQ:"QQQ y 'г'.",yQQQQ:"QQQQ y 'г'."},dateFormats:{yMMMMEEEEd:"EEEE, d MMMM y 'г'.",yMMMMd:"d MMMM y 'г'.",yMMMd:"d MMM y 'г'.",yMd:"dd.MM.yy"},timeFormats:{hmmsszzzz:"H:mm:ss zzzz",hmsz:"H:mm:ss z",hms:"H:mm:ss",hm:"H:mm"}},calendars:{buddhist:{months:{narrow:["Я","Ф","М","А","М","И","И","А","С","О","Н","Д"],short:["янв.","февр.","мар.","апр.","мая","июн.","июл.","авг.","сент.","окт.","нояб.","дек."],long:["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["BE"],short:["BE"],long:["BE"]},dayPeriods:{am:"ДП",pm:"ПП"}},chinese:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1","2","3","4","5","6","7","8","9","10","11","12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},dayPeriods:{am:"ДП",pm:"ПП"}},coptic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Тот","Бабэ","Хатур","Кихак","Тубэ","Амшир","Барамхат","Бармуда","Башнас","Бауна","Абиб","Мисра","Наси"],long:["Тот","Бабэ","Хатур","Кихак","Тубэ","Амшир","Барамхат","Бармуда","Башнас","Бауна","Абиб","Мисра","Наси"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"ДП",pm:"ПП"}},dangi:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["1","2","3","4","5","6","7","8","9","10","11","12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},dayPeriods:{am:"ДП",pm:"ПП"}},ethiopic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Мескерем","Текемт","Хедар","Тахсас","Тер","Якатит","Магабит","Миазия","Генбот","Сэнэ","Хамлэ","Нахасэ","Эпагомен"],long:["Мескерем","Текемт","Хедар","Тахсас","Тер","Якатит","Магабит","Миазия","Генбот","Сэнэ","Хамлэ","Нахасэ","Эпагомен"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"ДП",pm:"ПП"}},ethioaa:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13"],short:["Мескерем","Текемт","Хедар","Тахсас","Тер","Якатит","Магабит","Миазия","Генбот","Сэнэ","Хамлэ","Нахасэ","Эпагомен"],long:["Мескерем","Текемт","Хедар","Тахсас","Тер","Якатит","Магабит","Миазия","Генбот","Сэнэ","Хамлэ","Нахасэ","Эпагомен"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["ERA0"],short:["ERA0"],long:["ERA0"]},dayPeriods:{am:"ДП",pm:"ПП"}},generic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"],long:["M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["ERA0","ERA1"],short:["ERA0","ERA1"],long:["ERA0","ERA1"]},dayPeriods:{am:"ДП",pm:"ПП"}},gregory:{months:{narrow:["Я","Ф","М","А","М","И","И","А","С","О","Н","Д"],short:["янв.","февр.","мар.","апр.","мая","июн.","июл.","авг.","сент.","окт.","нояб.","дек."],long:["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["до н.э.","н.э.","BCE","CE"],short:["до н. э.","н. э.","BCE","CE"],long:["до Рождества Христова","от Рождества Христова","до нашей эры","нашей эры"]},dayPeriods:{am:"ДП",pm:"ПП"}},hebrew:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12","13","7"],short:["Тишрей","Хешван","Кислев","Тевет","Шеват","Адар I","Адар","Нисан","Ияр","Сиван","Таммуз","Ав","Элул","Адар II"],long:["Тишрей","Хешван","Кислев","Тевет","Шеват","Адар I","Адар","Нисан","Ияр","Сиван","Таммуз","Ав","Элул","Адар II"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["AM"],short:["AM"],long:["AM"]},dayPeriods:{am:"ДП",pm:"ПП"}},indian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Чайтра","Ваисакха","Джанштха","Асадха","Сравана","Бхадра","Азвина","Картика","Аграхайана","Пауза","Магха","Пхалгуна"],long:["Чайтра","Ваисакха","Джанштха","Асадха","Сравана","Бхадра","Азвина","Картика","Аграхайана","Пауза","Магха","Пхалгуна"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["Saka"],short:["Saka"],long:["Saka"]},dayPeriods:{am:"ДП",pm:"ПП"}},islamic:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Мухаррам","Сафар","Раби-уль-авваль","Раби-уль-ахир","Джумад-уль-авваль","Джумад-уль-ахир","Раджаб","Шаабан","Рамадан","Шавваль","Зуль-Каада","Зуль-Хиджжа"],long:["Мухаррам","Сафар","Раби-уль-авваль","Раби-уль-ахир","Джумад-уль-авваль","Джумад-уль-ахир","Раджаб","Шаабан","Рамадан","Шавваль","Зуль-Каада","Зуль-Хиджжа"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"ДП",pm:"ПП"}},islamicc:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Мухаррам","Сафар","Раби-уль-авваль","Раби-уль-ахир","Джумад-уль-авваль","Джумад-уль-ахир","Раджаб","Шаабан","Рамадан","Шавваль","Зуль-Каада","Зуль-Хиджжа"],long:["Мухаррам","Сафар","Раби-уль-авваль","Раби-уль-ахир","Джумад-уль-авваль","Джумад-уль-ахир","Раджаб","Шаабан","Рамадан","Шавваль","Зуль-Каада","Зуль-Хиджжа"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["AH"],short:["AH"],long:["AH"]},dayPeriods:{am:"ДП",pm:"ПП"}},japanese:{months:{narrow:["Я","Ф","М","А","М","И","И","А","С","О","Н","Д"],short:["янв.","февр.","мар.","апр.","мая","июн.","июл.","авг.","сент.","окт.","нояб.","дек."],long:["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["Taika (645–650)","Hakuchi (650–671)","Hakuhō (672–686)","Shuchō (686–701)","Taihō (701–704)","Keiun (704–708)","Wadō (708–715)","Reiki (715–717)","Yōrō (717–724)","Jinki (724–729)","Tenpyō (729–749)","Tenpyō-kampō (749-749)","Tenpyō-shōhō (749-757)","Tenpyō-hōji (757-765)","Tenpyō-jingo (765-767)","Jingo-keiun (767-770)","Hōki (770–780)","Ten-ō (781-782)","Enryaku (782–806)","Daidō (806–810)","Kōnin (810–824)","Tenchō (824–834)","Jōwa (834–848)","Kajō (848–851)","Ninju (851–854)","Saikō (854–857)","Ten-an (857-859)","Jōgan (859–877)","Gangyō (877–885)","Ninna (885–889)","Kanpyō (889–898)","Shōtai (898–901)","Engi (901–923)","Enchō (923–931)","Jōhei (931–938)","Tengyō (938–947)","Tenryaku (947–957)","Tentoku (957–961)","Ōwa (961–964)","Kōhō (964–968)","Anna (968–970)","Tenroku (970–973)","Ten’en (973–976)","Jōgen (976–978)","Tengen (978–983)","Eikan (983–985)","Kanna (985–987)","Eien (987–989)","Eiso (989–990)","Shōryaku (990–995)","Chōtoku (995–999)","Chōhō (999–1004)","Kankō (1004–1012)","Chōwa (1012–1017)","Kannin (1017–1021)","Jian (1021–1024)","Manju (1024–1028)","Chōgen (1028–1037)","Chōryaku (1037–1040)","Chōkyū (1040–1044)","Kantoku (1044–1046)","Eishō (1046–1053)","Tengi (1053–1058)","Kōhei (1058–1065)","Jiryaku (1065–1069)","Enkyū (1069–1074)","Shōho (1074–1077)","Shōryaku (1077–1081)","Eihō (1081–1084)","Ōtoku (1084–1087)","Kanji (1087–1094)","Kahō (1094–1096)","Eichō (1096–1097)","Jōtoku (1097–1099)","Kōwa (1099–1104)","Chōji (1104–1106)","Kashō (1106–1108)","Tennin (1108–1110)","Ten-ei (1110-1113)","Eikyū (1113–1118)","Gen’ei (1118–1120)","Hōan (1120–1124)","Tenji (1124–1126)","Daiji (1126–1131)","Tenshō (1131–1132)","Chōshō (1132–1135)","Hōen (1135–1141)","Eiji (1141–1142)","Kōji (1142–1144)","Ten’yō (1144–1145)","Kyūan (1145–1151)","Ninpei (1151–1154)","Kyūju (1154–1156)","Hōgen (1156–1159)","Heiji (1159–1160)","Eiryaku (1160–1161)","Ōho (1161–1163)","Chōkan (1163–1165)","Eiman (1165–1166)","Nin’an (1166–1169)","Kaō (1169–1171)","Shōan (1171–1175)","Angen (1175–1177)","Jishō (1177–1181)","Yōwa (1181–1182)","Juei (1182–1184)","Genryaku (1184–1185)","Bunji (1185–1190)","Kenkyū (1190–1199)","Shōji (1199–1201)","Kennin (1201–1204)","Genkyū (1204–1206)","Ken’ei (1206–1207)","Jōgen (1207–1211)","Kenryaku (1211–1213)","Kenpō (1213–1219)","Jōkyū (1219–1222)","Jōō (1222–1224)","Gennin (1224–1225)","Karoku (1225–1227)","Antei (1227–1229)","Kanki (1229–1232)","Jōei (1232–1233)","Tenpuku (1233–1234)","Bunryaku (1234–1235)","Katei (1235–1238)","Ryakunin (1238–1239)","En’ō (1239–1240)","Ninji (1240–1243)","Kangen (1243–1247)","Hōji (1247–1249)","Kenchō (1249–1256)","Kōgen (1256–1257)","Shōka (1257–1259)","Shōgen (1259–1260)","Bun’ō (1260–1261)","Kōchō (1261–1264)","Bun’ei (1264–1275)","Kenji (1275–1278)","Kōan (1278–1288)","Shōō (1288–1293)","Einin (1293–1299)","Shōan (1299–1302)","Kengen (1302–1303)","Kagen (1303–1306)","Tokuji (1306–1308)","Enkyō (1308–1311)","Ōchō (1311–1312)","Shōwa (1312–1317)","Bunpō (1317–1319)","Genō (1319–1321)","Genkō (1321–1324)","Shōchū (1324–1326)","Karyaku (1326–1329)","Gentoku (1329–1331)","Genkō (1331–1334)","Kenmu (1334–1336)","Engen (1336–1340)","Kōkoku (1340–1346)","Shōhei (1346–1370)","Kentoku (1370–1372)","Bunchū (1372–1375)","Tenju (1375–1379)","Kōryaku (1379–1381)","Kōwa (1381–1384)","Genchū (1384–1392)","Meitoku (1384–1387)","Kakei (1387–1389)","Kōō (1389–1390)","Meitoku (1390–1394)","Ōei (1394–1428)","Shōchō (1428–1429)","Eikyō (1429–1441)","Kakitsu (1441–1444)","Bun’an (1444–1449)","Hōtoku (1449–1452)","Kyōtoku (1452–1455)","Kōshō (1455–1457)","Chōroku (1457–1460)","Kanshō (1460–1466)","Bunshō (1466–1467)","Ōnin (1467–1469)","Bunmei (1469–1487)","Chōkyō (1487–1489)","Entoku (1489–1492)","Meiō (1492–1501)","Bunki (1501–1504)","Eishō (1504–1521)","Taiei (1521–1528)","Kyōroku (1528–1532)","Tenbun (1532–1555)","Kōji (1555–1558)","Eiroku (1558–1570)","Genki (1570–1573)","Tenshō (1573–1592)","Bunroku (1592–1596)","Keichō (1596–1615)","Genna (1615–1624)","Kan’ei (1624–1644)","Shōho (1644–1648)","Keian (1648–1652)","Jōō (1652–1655)","Meireki (1655–1658)","Manji (1658–1661)","Kanbun (1661–1673)","Enpō (1673–1681)","Tenna (1681–1684)","Jōkyō (1684–1688)","Genroku (1688–1704)","Hōei (1704–1711)","Shōtoku (1711–1716)","Kyōhō (1716–1736)","Genbun (1736–1741)","Kanpō (1741–1744)","Enkyō (1744–1748)","Kan’en (1748–1751)","Hōreki (1751–1764)","Meiwa (1764–1772)","An’ei (1772–1781)","Tenmei (1781–1789)","Kansei (1789–1801)","Kyōwa (1801–1804)","Bunka (1804–1818)","Bunsei (1818–1830)","Tenpō (1830–1844)","Kōka (1844–1848)","Kaei (1848–1854)","Ansei (1854–1860)","Man’en (1860–1861)","Bunkyū (1861–1864)","Genji (1864–1865)","Keiō (1865–1868)","M","T","S","H"],short:["Эпоха Тайка (645–650)","Эпоха Хакути (650–671)","Эпоха Хакухо (672–686)","Эпоха Сючё (686–701)","Эпоха Тайхо (701–704)","Эпоха Кёюн (704–708)","Эпоха Вадо (708–715)","Эпоха Рэйки (715–717)","Эпоха Ёро (717–724)","Эпоха Дзинки (724–729)","Эпоха Темпьё (729–749)","Эпоха Темпьё (749–749)","Эпоха Темпьё-Сьохо (749-757)","Эпоха Темпьё-Ходзи (757-765)","Эпоха Темпьё-Ходзи (765-767)","Эпоха Джинго-Кёюн (767-770)","Эпоха Хоки (770–780)","Эпоха Теньё (781–782)","Эпоха Енряку (782–806)","Эпоха Дайдо (806–810)","Эпоха Конин (810–824)","Эпоха Тентьо (824–834)","Эпоха Шова (834–848)","Эпоха Кайо (848–851)","Эпоха Ниндзю (851–854)","Эпоха Сайко (854–857)","Эпоха Теннан (857–859)","Эпоха Йоган (859–877)","Эпоха Генкей (877–885)","Эпоха Нинна (885–889)","Эпоха Кампьё (889–898)","Эпоха Сьотай (898–901)","Эпоха Энги (901–923)","Эпоха Ентьо (923–931)","Эпоха Сьёхэй (931–938)","Эпоха Тенгьо (938–947)","Эпоха Тенрияку (947–957)","Эпоха Тентоку (957–961)","Эпоха Ова (961–964)","Эпоха Кохо (964–968)","Эпоха Анна (968–970)","Эпоха Тенроку (970–973)","Эпоха Теньен (973–976)","Эпоха Дзьоген (976–978)","Эпоха Тенген (978–983)","Эпоха Ейкан (983–985)","Эпоха Канна (985–987)","Эпоха Ейен (987–989)","Эпоха Ейсо (989–990)","Эпоха Сёряку (990–995)","Эпоха Тётоку (995–999)","Эпоха Тёхо (999–1004)","Эпоха Канко (1004–1012)","Эпоха Тёва (1012–1017)","Эпоха Каннин (1017–1021)","Эпоха Дзиан (1021–1024)","Эпоха Мандзю (1024–1028)","Эпоха Тёгэн (1028–1037)","Эпоха Тёряку (1037–1040)","Эпоха Тёкю (1040–1044)","Эпоха Катоку (1044–1046)","Эпоха Эйсо (1046–1053)","Эпоха Тэнги (1053–1058)","Эпоха Кохэй (1058–1065)","Эпоха Дзиряку (1065–1069)","Эпоха Энкю (1069–1074)","Эпоха Сёхо (1074–1077)","Эпоха Сёряку (1077–1081)","Эпоха Эйхо (1081–1084)","Эпоха Отоку (1084–1087)","Эпоха Кандзи (1087–1094)","Эпоха Кахо (1094–1096)","Эпоха Эйтё (1096–1097)","Эпоха Сётоку (1097–1099)","Эпоха Кова (1099–1104)","Эпоха Тёдзи (1104–1106)","Эпоха Касё (1106–1108)","Эпоха Тэннин (1108–1110)","Эпоха Тэнъэй (1110–1113)","Эпоха Эйкю (1113–1118)","Эпоха Гэнъэй (1118–1120)","Эпоха Хоан (1120–1124)","Эпоха Тэндзи (1124–1126)","Эпоха Дайдзи (1126–1131)","Эпоха Тэнсё (1131–1132)","Эпоха Тёсё (1132–1135)","Эпоха Хоэн (1135–1141)","Эпоха Эйдзи (1141–1142)","Эпоха Кодзи (1142–1144)","Эпоха Тэнё (1144–1145)","Эпоха Кюан (1145–1151)","Эпоха Нимпэй (1151–1154)","Эпоха Кюдзю (1154–1156)","Эпоха Хогэн (1156–1159)","Эпоха Хэйдзи (1159–1160)","Эпоха Эйряку (1160–1161)","Эпоха Охо (1161–1163)","Эпоха Тёкан (1163–1165)","Эпоха Эйман (1165–1166)","Эпоха Нинъан (1166–1169)","Эпоха Као (1169–1171)","Эпоха Сёан (1171–1175)","Эпоха Ангэн (1175–1177)","Эпоха Дзисё (1177–1181)","Эпоха Ёва (1181–1182)","Эпоха Дзюэй (1182–1184)","Эпоха Гэнрюку (1184–1185)","Эпоха Бундзи (1185–1190)","Эпоха Кэнкю (1190–1199)","Эпоха Сёдзи (1199–1201)","Эпоха Кэннин (1201–1204)","Эпоха Гэнкю (1204–1206)","Эпоха Кэнъэй (1206–1207)","Эпоха Сёгэн (1207–1211)","Эпоха Кэнряку (1211–1213)","Эпоха Кэмпо (1213–1219)","Эпоха Сёкю (1219–1222)","Эпоха Дзёо (1222–1224)","Эпоха Гэннин (1224–1225)","Эпоха Кароку (1225–1227)","Эпоха Антэй (1227–1229)","Эпоха Канки (1229–1232)","Эпоха Дзёэй (1232–1233)","Эпоха Тэмпуку (1233–1234)","Эпоха Бунряку (1234–1235)","Эпоха Катэй (1235–1238)","Эпоха Рякунин (1238–1239)","Эпоха Энъо (1239–1240)","Эпоха Ниндзи (1240–1243)","Эпоха Кангэн (1243–1247)","Эпоха Ходзи (1247–1249)","Эпоха Кэнтё (1249–1256)","Эпоха Когэн (1256–1257)","Эпоха Сёка (1257–1259)","Эпоха Сёгэн (1259–1260)","Эпоха Бунъо (1260–1261)","Эпоха Котё (1261–1264)","Эпоха Бунъэй (1264–1275)","Эпоха Кэндзи (1275–1278)","Эпоха Коан (1278–1288)","Эпоха Сёо (1288–1293)","Эпоха Эйнин (1293–1299)","Эпоха Сёан (1299–1302)","Эпоха Кэнгэн (1302–1303)","Эпоха Кагэн (1303–1306)","Эпоха Токудзи (1306–1308)","Эпоха Энкэй (1308–1311)","Эпоха Отё (1311–1312)","Эпоха Сёва (1312–1317)","Эпоха Бумпо (1317–1319)","Эпоха Гэно (1319–1321)","Эпоха Гэнкё (1321–1324)","Эпоха Сётю (1324–1326)","Эпоха Карэки (1326–1329)","Эпоха Гэнтоку (1329–1331)","Эпоха Гэнко (1331–1334)","Эпоха Кэмму (1334–1336)","Эпоха Энгэн (1336–1340)","Эпоха Кококу (1340–1346)","Эпоха Сёхэй (1346–1370)","Эпоха Кэнтоку (1370–1372)","Эпоха Бунтю (1372–1375)","Эпоха Иэндзю (1375–1379)","Эпоха Коряку (1379–1381)","Эпоха Кова (1381–1384)","Эпоха Гэнтю (1384–1392)","Эпоха Мэйтоку (1384–1387)","Эпоха Какэй (1387–1389)","Эпоха Коо (1389–1390)","Эпоха Мэйтоку (1390–1394)","Эпоха Оэй (1394–1428)","Эпоха Сётё (1428–1429)","Эпоха Эйкё (1429–1441)","Эпоха Какицу (1441–1444)","Эпоха Банъан (1444–1449)","Эпоха Хотоку (1449–1452)","Эпоха Кётоку (1452–1455)","Эпоха Косё (1455–1457)","Эпоха Тёроку (1457–1460)","Эпоха Кансё (1460–1466)","Эпоха Бунсё (1466–1467)","Эпоха Онин (1467–1469)","Эпоха Буммэй (1469–1487)","Эпоха Тёкё (1487–1489)","Эпоха Энтоку (1489–1492)","Эпоха Мэйо (1492–1501)","Эпоха Бунки (1501–1504)","Эпоха Эйсё (1504–1521)","Эпоха Тайэй (1521–1528)","Эпоха Кёроку (1528–1532)","Эпоха Тэммон (1532–1555)","Эпоха Кодзи (1555–1558)","Эпоха Эйроку (1558–1570)","Эпоха Гэнки (1570–1573)","Эпоха Тэнсё (1573–1592)","Эпоха Бунроку (1592–1596)","Эпоха Кэйтё (1596–1615)","Эпоха Гэнва (1615–1624)","Эпоха Канъэй (1624–1644)","Эпоха Сёхо (1644–1648)","Эпоха Кэйан (1648–1652)","Эпоха Сё (1652–1655)","Эпоха Мэйряку (1655–1658)","Эпоха Мандзи (1658–1661)","Эпоха Камбун (1661–1673)","Эпоха Эмпо (1673–1681)","Эпоха Тэнва (1681–1684)","Эпоха Дзёкё (1684–1688)","Эпоха Гэнроку (1688–1704)","Эпоха Хоэй (1704–1711)","Эпоха Сётоку (1711–1716)","Эпоха Кёхо (1716–1736)","Эпоха Гэмбун (1736–1741)","Эпоха Кампо (1741–1744)","Эпоха Энкё (1744–1748)","Эпоха Канъэн (1748–1751)","Эпоха Хоряку (1751–1764)","Эпоха Мэйва (1764–1772)","Эпоха Анъэй (1772–1781)","Эпоха Тэммэй (1781–1789)","Эпоха Кансэй (1789–1801)","Эпоха Кёва (1801–1804)","Эпоха Бунка (1804–1818)","Эпоха Бунсэй (1818–1830)","Эпоха Тэмпо (1830–1844)","Эпоха Кока (1844–1848)","Эпоха Каэй (1848–1854)","Эпоха Ансэй (1854–1860)","Эпоха Манъэн (1860–1861)","Эпоха Бункю (1861–1864)","Эпоха Гендзи (1864–1865)","Эпоха Кейо (1865–1868)","Эпоха Мэйдзи","Эпоха Тайсьо","Сьова","Эпоха Хэйсэй"],long:["Эпоха Тайка (645–650)","Эпоха Хакути (650–671)","Эпоха Хакухо (672–686)","Эпоха Сючё (686–701)","Эпоха Тайхо (701–704)","Эпоха Кёюн (704–708)","Эпоха Вадо (708–715)","Эпоха Рэйки (715–717)","Эпоха Ёро (717–724)","Эпоха Дзинки (724–729)","Эпоха Темпьё (729–749)","Эпоха Темпьё (749–749)","Эпоха Темпьё-Сьохо (749-757)","Эпоха Темпьё-Ходзи (757-765)","Эпоха Темпьё-Ходзи (765-767)","Эпоха Джинго-Кёюн (767-770)","Эпоха Хоки (770–780)","Эпоха Теньё (781–782)","Эпоха Енряку (782–806)","Эпоха Дайдо (806–810)","Эпоха Конин (810–824)","Эпоха Тентьо (824–834)","Эпоха Шова (834–848)","Эпоха Кайо (848–851)","Эпоха Ниндзю (851–854)","Эпоха Сайко (854–857)","Эпоха Теннан (857–859)","Эпоха Йоган (859–877)","Эпоха Генкей (877–885)","Эпоха Нинна (885–889)","Эпоха Кампьё (889–898)","Эпоха Сьотай (898–901)","Эпоха Энги (901–923)","Эпоха Ентьо (923–931)","Эпоха Сьёхэй (931–938)","Эпоха Тенгьо (938–947)","Эпоха Тенрияку (947–957)","Эпоха Тентоку (957–961)","Эпоха Ова (961–964)","Эпоха Кохо (964–968)","Эпоха Анна (968–970)","Эпоха Тенроку (970–973)","Эпоха Теньен (973–976)","Эпоха Дзьоген (976–978)","Эпоха Тенген (978–983)","Эпоха Ейкан (983–985)","Эпоха Канна (985–987)","Эпоха Ейен (987–989)","Эпоха Ейсо (989–990)","Эпоха Сёряку (990–995)","Эпоха Тётоку (995–999)","Эпоха Тёхо (999–1004)","Эпоха Канко (1004–1012)","Эпоха Тёва (1012–1017)","Эпоха Каннин (1017–1021)","Эпоха Дзиан (1021–1024)","Эпоха Мандзю (1024–1028)","Эпоха Тёгэн (1028–1037)","Эпоха Тёряку (1037–1040)","Эпоха Тёкю (1040–1044)","Эпоха Катоку (1044–1046)","Эпоха Эйсо (1046–1053)","Эпоха Тэнги (1053–1058)","Эпоха Кохэй (1058–1065)","Эпоха Дзиряку (1065–1069)","Эпоха Энкю (1069–1074)","Эпоха Сёхо (1074–1077)","Эпоха Сёряку (1077–1081)","Эпоха Эйхо (1081–1084)","Эпоха Отоку (1084–1087)","Эпоха Кандзи (1087–1094)","Эпоха Кахо (1094–1096)","Эпоха Эйтё (1096–1097)","Эпоха Сётоку (1097–1099)","Эпоха Кова (1099–1104)","Эпоха Тёдзи (1104–1106)","Эпоха Касё (1106–1108)","Эпоха Тэннин (1108–1110)","Эпоха Тэнъэй (1110–1113)","Эпоха Эйкю (1113–1118)","Эпоха Гэнъэй (1118–1120)","Эпоха Хоан (1120–1124)","Эпоха Тэндзи (1124–1126)","Эпоха Дайдзи (1126–1131)","Эпоха Тэнсё (1131–1132)","Эпоха Тёсё (1132–1135)","Эпоха Хоэн (1135–1141)","Эпоха Эйдзи (1141–1142)","Эпоха Кодзи (1142–1144)","Эпоха Тэнё (1144–1145)","Эпоха Кюан (1145–1151)","Эпоха Нимпэй (1151–1154)","Эпоха Кюдзю (1154–1156)","Эпоха Хогэн (1156–1159)","Эпоха Хэйдзи (1159–1160)","Эпоха Эйряку (1160–1161)","Эпоха Охо (1161–1163)","Эпоха Тёкан (1163–1165)","Эпоха Эйман (1165–1166)","Эпоха Нинъан (1166–1169)","Эпоха Као (1169–1171)","Эпоха Сёан (1171–1175)","Эпоха Ангэн (1175–1177)","Эпоха Дзисё (1177–1181)","Эпоха Ёва (1181–1182)","Эпоха Дзюэй (1182–1184)","Эпоха Гэнрюку (1184–1185)","Эпоха Бундзи (1185–1190)","Эпоха Кэнкю (1190–1199)","Эпоха Сёдзи (1199–1201)","Эпоха Кэннин (1201–1204)","Эпоха Гэнкю (1204–1206)","Эпоха Кэнъэй (1206–1207)","Эпоха Сёгэн (1207–1211)","Эпоха Кэнряку (1211–1213)","Эпоха Кэмпо (1213–1219)","Эпоха Сёкю (1219–1222)","Эпоха Дзёо (1222–1224)","Эпоха Гэннин (1224–1225)","Эпоха Кароку (1225–1227)","Эпоха Антэй (1227–1229)","Эпоха Канки (1229–1232)","Эпоха Дзёэй (1232–1233)","Эпоха Тэмпуку (1233–1234)","Эпоха Бунряку (1234–1235)","Эпоха Катэй (1235–1238)","Эпоха Рякунин (1238–1239)","Эпоха Энъо (1239–1240)","Эпоха Ниндзи (1240–1243)","Эпоха Кангэн (1243–1247)","Эпоха Ходзи (1247–1249)","Эпоха Кэнтё (1249–1256)","Эпоха Когэн (1256–1257)","Эпоха Сёка (1257–1259)","Эпоха Сёгэн (1259–1260)","Эпоха Бунъо (1260–1261)","Эпоха Котё (1261–1264)","Эпоха Бунъэй (1264–1275)","Эпоха Кэндзи (1275–1278)","Эпоха Коан (1278–1288)","Эпоха Сёо (1288–1293)","Эпоха Эйнин (1293–1299)","Эпоха Сёан (1299–1302)","Эпоха Кэнгэн (1302–1303)","Эпоха Кагэн (1303–1306)","Эпоха Токудзи (1306–1308)","Эпоха Энкэй (1308–1311)","Эпоха Отё (1311–1312)","Эпоха Сёва (1312–1317)","Эпоха Бумпо (1317–1319)","Эпоха Гэно (1319–1321)","Эпоха Гэнкё (1321–1324)","Эпоха Сётю (1324–1326)","Эпоха Карэки (1326–1329)","Эпоха Гэнтоку (1329–1331)","Эпоха Гэнко (1331–1334)","Эпоха Кэмму (1334–1336)","Эпоха Энгэн (1336–1340)","Эпоха Кококу (1340–1346)","Эпоха Сёхэй (1346–1370)","Эпоха Кэнтоку (1370–1372)","Эпоха Бунтю (1372–1375)","Эпоха Иэндзю (1375–1379)","Эпоха Коряку (1379–1381)","Эпоха Кова (1381–1384)","Эпоха Гэнтю (1384–1392)","Эпоха Мэйтоку (1384–1387)","Эпоха Какэй (1387–1389)","Эпоха Коо (1389–1390)","Эпоха Мэйтоку (1390–1394)","Эпоха Оэй (1394–1428)","Эпоха Сётё (1428–1429)","Эпоха Эйкё (1429–1441)","Эпоха Какицу (1441–1444)","Эпоха Банъан (1444–1449)","Эпоха Хотоку (1449–1452)","Эпоха Кётоку (1452–1455)","Эпоха Косё (1455–1457)","Эпоха Тёроку (1457–1460)","Эпоха Кансё (1460–1466)","Эпоха Бунсё (1466–1467)","Эпоха Онин (1467–1469)","Эпоха Буммэй (1469–1487)","Эпоха Тёкё (1487–1489)","Эпоха Энтоку (1489–1492)","Эпоха Мэйо (1492–1501)","Эпоха Бунки (1501–1504)","Эпоха Эйсё (1504–1521)","Эпоха Тайэй (1521–1528)","Эпоха Кёроку (1528–1532)","Эпоха Тэммон (1532–1555)","Эпоха Кодзи (1555–1558)","Эпоха Эйроку (1558–1570)","Эпоха Гэнки (1570–1573)","Эпоха Тэнсё (1573–1592)","Эпоха Бунроку (1592–1596)","Эпоха Кэйтё (1596–1615)","Эпоха Гэнва (1615–1624)","Эпоха Канъэй (1624–1644)","Эпоха Сёхо (1644–1648)","Эпоха Кэйан (1648–1652)","Эпоха Сё (1652–1655)","Эпоха Мэйряку (1655–1658)","Эпоха Мандзи (1658–1661)","Эпоха Камбун (1661–1673)","Эпоха Эмпо (1673–1681)","Эпоха Тэнва (1681–1684)","Эпоха Дзёкё (1684–1688)","Эпоха Гэнроку (1688–1704)","Эпоха Хоэй (1704–1711)","Эпоха Сётоку (1711–1716)","Эпоха Кёхо (1716–1736)","Эпоха Гэмбун (1736–1741)","Эпоха Кампо (1741–1744)","Эпоха Энкё (1744–1748)","Эпоха Канъэн (1748–1751)","Эпоха Хоряку (1751–1764)","Эпоха Мэйва (1764–1772)","Эпоха Анъэй (1772–1781)","Эпоха Тэммэй (1781–1789)","Эпоха Кансэй (1789–1801)","Эпоха Кёва (1801–1804)","Эпоха Бунка (1804–1818)","Эпоха Бунсэй (1818–1830)","Эпоха Тэмпо (1830–1844)","Эпоха Кока (1844–1848)","Эпоха Каэй (1848–1854)","Эпоха Ансэй (1854–1860)","Эпоха Манъэн (1860–1861)","Эпоха Бункю (1861–1864)","Эпоха Гендзи (1864–1865)","Эпоха Кейо (1865–1868)","Эпоха Мэйдзи","Эпоха Тайсьо","Сьова","Эпоха Хэйсэй"]},dayPeriods:{am:"ДП",pm:"ПП"}},persian:{months:{narrow:["1","2","3","4","5","6","7","8","9","10","11","12"],short:["Фарвардин","Ордибехешт","Хордад","Тир","Мордад","Шахривер","Мехр","Абан","Азер","Дей","Бахман","Эсфанд"],long:["Фарвардин","Ордибехешт","Хордад","Тир","Мордад","Шахривер","Мехр","Абан","Азер","Дей","Бахман","Эсфанд"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["AP"],short:["AP"],long:["AP"]},dayPeriods:{am:"ДП",pm:"ПП"}},roc:{months:{narrow:["Я","Ф","М","А","М","И","И","А","С","О","Н","Д"],short:["янв.","февр.","мар.","апр.","мая","июн.","июл.","авг.","сент.","окт.","нояб.","дек."],long:["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"]},days:{narrow:["вс","пн","вт","ср","чт","пт","сб"],short:["вс","пн","вт","ср","чт","пт","сб"],long:["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"]},eras:{narrow:["Before R.O.C.","Minguo"],short:["Before R.O.C.","Minguo"],long:["Before R.O.C.","Minguo"]},dayPeriods:{am:"ДП",pm:"ПП"}}}},number:{nu:["latn"],patterns:{decimal:{positivePattern:"{number}",negativePattern:"{minusSign}{number}"},currency:{positivePattern:"{number} {currency}",negativePattern:"{minusSign}{number} {currency}"},percent:{positivePattern:"{number} {percentSign}",negativePattern:"{minusSign}{number} {percentSign}"}},symbols:{latn:{decimal:",",group:" ",nan:"не число",plusSign:"+",minusSign:"-",percentSign:"%",infinity:"∞"}},currencies:{AUD:"A$",BRL:"R$",CAD:"CA$",CNY:"CN¥",EUR:"€",GBP:"£",HKD:"HK$",ILS:"₪",INR:"₹",JPY:"¥",KRW:"₩",MXN:"MX$",NZD:"NZ$",RUB:"₽",RUR:"р.",THB:"฿",TMT:"ТМТ",TWD:"NT$",UAH:"₴",USD:"$",VND:"₫",XAF:"FCFA",XCD:"EC$",XOF:"CFA",XPF:"CFPF",XXX:"XXXX"}}});
 
 /***/ }),
-/* 108 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["IntlMessageFormat"] = __webpack_require__(109);
+	/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["IntlMessageFormat"] = __webpack_require__(108);
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ }),
-/* 109 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node:true */
 	
 	'use strict';
 	
-	var IntlMessageFormat = __webpack_require__(110)['default'];
+	var IntlMessageFormat = __webpack_require__(109)['default'];
 	
 	// Add all locale data to `IntlMessageFormat`. This module will be ignored when
 	// bundling for the browser with Browserify/Webpack.
-	__webpack_require__(118);
+	__webpack_require__(117);
 	
 	// Re-export `IntlMessageFormat` as the CommonJS default exports with all the
 	// locale data registered, and with English set as the default locale. Define
@@ -49567,13 +49377,13 @@
 
 
 /***/ }),
-/* 110 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jslint esnext: true */
 	
 	"use strict";
-	var src$core$$ = __webpack_require__(111), src$en$$ = __webpack_require__(117);
+	var src$core$$ = __webpack_require__(110), src$en$$ = __webpack_require__(116);
 	
 	src$core$$["default"].__addLocaleData(src$en$$["default"]);
 	src$core$$["default"].defaultLocale = 'en';
@@ -49583,7 +49393,7 @@
 
 
 /***/ }),
-/* 111 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/*
@@ -49595,7 +49405,7 @@
 	/* jslint esnext: true */
 	
 	"use strict";
-	var src$utils$$ = __webpack_require__(112), src$es5$$ = __webpack_require__(113), src$compiler$$ = __webpack_require__(114), intl$messageformat$parser$$ = __webpack_require__(115);
+	var src$utils$$ = __webpack_require__(111), src$es5$$ = __webpack_require__(112), src$compiler$$ = __webpack_require__(113), intl$messageformat$parser$$ = __webpack_require__(114);
 	exports["default"] = MessageFormat;
 	
 	// -- MessageFormat --------------------------------------------------------
@@ -49852,7 +49662,7 @@
 
 
 /***/ }),
-/* 112 */
+/* 111 */
 /***/ (function(module, exports) {
 
 	/*
@@ -49889,7 +49699,7 @@
 
 
 /***/ }),
-/* 113 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/*
@@ -49901,7 +49711,7 @@
 	/* jslint esnext: true */
 	
 	"use strict";
-	var src$utils$$ = __webpack_require__(112);
+	var src$utils$$ = __webpack_require__(111);
 	
 	// Purposely using the same implementation as the Intl.js `Intl` polyfill.
 	// Copyright 2013 Andy Earnshaw, MIT License
@@ -49943,7 +49753,7 @@
 
 
 /***/ }),
-/* 114 */
+/* 113 */
 /***/ (function(module, exports) {
 
 	/*
@@ -50157,17 +49967,17 @@
 
 
 /***/ }),
-/* 115 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	exports = module.exports = __webpack_require__(116)['default'];
+	exports = module.exports = __webpack_require__(115)['default'];
 	exports['default'] = exports;
 
 
 /***/ }),
-/* 116 */
+/* 115 */
 /***/ (function(module, exports) {
 
 	"use strict";
@@ -51531,7 +51341,7 @@
 
 
 /***/ }),
-/* 117 */
+/* 116 */
 /***/ (function(module, exports) {
 
 	// GENERATED FILE
@@ -51541,13 +51351,13 @@
 
 
 /***/ }),
-/* 118 */
+/* 117 */
 /***/ (function(module, exports) {
 
 	/* (ignored) */
 
 /***/ }),
-/* 119 */
+/* 118 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"en","pluralRuleFunction":function (n,ord){var s=String(n).split("."),v0=!s[1],t0=Number(s[0])==n,n10=t0&&s[0].slice(-1),n100=t0&&s[0].slice(-2);if(ord)return n10==1&&n100!=11?"one":n10==2&&n100!=12?"two":n10==3&&n100!=13?"few":"other";return n==1&&v0?"one":"other"}});
@@ -51660,7 +51470,7 @@
 
 
 /***/ }),
-/* 120 */
+/* 119 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"es","pluralRuleFunction":function (n,ord){if(ord)return"other";return n==1?"one":"other"}});
@@ -51692,7 +51502,7 @@
 
 
 /***/ }),
-/* 121 */
+/* 120 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"fr","pluralRuleFunction":function (n,ord){if(ord)return n==1?"one":"other";return n>=0&&n<2?"one":"other"}});
@@ -51744,7 +51554,7 @@
 
 
 /***/ }),
-/* 122 */
+/* 121 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"ca","pluralRuleFunction":function (n,ord){var s=String(n).split("."),v0=!s[1];if(ord)return n==1||n==3?"one":n==2?"two":n==4?"few":"other";return n==1&&v0?"one":"other"}});
@@ -51756,7 +51566,7 @@
 
 
 /***/ }),
-/* 123 */
+/* 122 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"nl","pluralRuleFunction":function (n,ord){var s=String(n).split("."),v0=!s[1];if(ord)return"other";return n==1&&v0?"one":"other"}});
@@ -51769,7 +51579,7 @@
 
 
 /***/ }),
-/* 124 */
+/* 123 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"it","pluralRuleFunction":function (n,ord){var s=String(n).split("."),v0=!s[1];if(ord)return n==11||n==8||n==80||n==800?"many":"other";return n==1&&v0?"one":"other"}});
@@ -51778,14 +51588,14 @@
 
 
 /***/ }),
-/* 125 */
+/* 124 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"th","pluralRuleFunction":function (n,ord){if(ord)return"other";return"other"}});
 
 
 /***/ }),
-/* 126 */
+/* 125 */
 /***/ (function(module, exports) {
 
 	IntlMessageFormat.__addLocaleData({"locale":"ru","pluralRuleFunction":function (n,ord){var s=String(n).split("."),i=s[0],v0=!s[1],i10=i.slice(-1),i100=i.slice(-2);if(ord)return"other";return v0&&i10==1&&i100!=11?"one":v0&&(i10>=2&&i10<=4)&&(i100<12||i100>14)?"few":v0&&i10==0||v0&&(i10>=5&&i10<=9)||v0&&(i100>=11&&i100<=14)?"many":"other"}});
@@ -51797,7 +51607,7 @@
 
 
 /***/ }),
-/* 127 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51955,7 +51765,7 @@
 	}
 
 /***/ }),
-/* 128 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -51987,7 +51797,8 @@
 	    _iOS2.default.getsettings(doNext);
 	    function doNext(str) {
 	        var list = str.split(',');
-	        _iOS2.default.path = list[1] == '0' ? list[0] + '/' : undefined;
+	        // iOS.path = list[1] == '0' ? list[0] + '/' : undefined;
+	        _iOS2.default.path = list[1] == '0' ? list[0] + '/' : '';
 	        _Lobby2.default.appinit(window.Settings.scratchJrVersion);
 	    }
 	}
@@ -52004,7 +51815,7 @@
 	}
 
 /***/ }),
-/* 129 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52036,7 +51847,8 @@
 	    _iOS2.default.getsettings(doNext);
 	    function doNext(str) {
 	        var list = str.split(',');
-	        _iOS2.default.path = list[1] == '0' ? list[0] + '/' : undefined;
+	        // iOS.path = list[1] == '0' ? list[0] + '/' : undefined;
+	        _iOS2.default.path = list[1] == '0' ? list[0] + '/' : '';
 	        if (list.length > 2) {
 	            _Record2.default.available = list[2] == 'YES' ? true : false;
 	        }
@@ -52048,7 +51860,7 @@
 	}
 
 /***/ }),
-/* 130 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -52090,7 +51902,7 @@
 	}
 
 /***/ }),
-/* 131 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';

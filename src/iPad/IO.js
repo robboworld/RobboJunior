@@ -88,20 +88,17 @@ export default class IO {
         if ((MediaLib.keys[md5]) && (md5.indexOf('_custom') < 0)) {  //modified_by_Yaroslav
             fcn(MediaLib.path + md5); return;
         } // just url link assets do not have photos
-        if (md5.indexOf('/') > -1) {
+        if ((md5.indexOf('/') > -1) && (md5.indexOf('_custom') < 0)) {
             IO.requestFromServer(md5, gotit); // get url contents
             return;
         }
-        if ((IO.getExtension(md5) == 'png') && iOS.path) {
-            fcn(iOS.path + md5); // only if it is not in debug mode
+        if ((IO.getExtension(md5) == 'png') && iOS.path !== iOS.storagePath) {
+            // fcn(iOS.path + md5); // only if it is not in debug mode
+            fcn(md5);
         } else {
-
-          if (md5.indexOf('_custom') != -1)
-          {
-
-            md5 = md5.replace("_custom","");
-
-          }
+            if (md5.indexOf('_custom') != -1) {
+                md5 = md5.replace("_custom","");
+            }
             iOS.getmedia(md5, nextStep);
         } // get url contents
 
@@ -118,9 +115,22 @@ export default class IO {
 
         function nextStep (dataurl) { // iOS 7 requires to read the internal base64 images before returning contents
             var str = atob(dataurl);
-            if ((str.indexOf('xlink:href') < 0) && iOS.path) {
-                fcn(iOS.path + md5); // does not have embedded images
+            if ((str.indexOf('xlink:href') < 0) /*&& (md5.indexOf(iOS.storagePath) < 0)*/ && (iOS.path !== iOS.storagePath)) {
+                //fcn(iOS.path + md5); // does not have embedded images
+                fcn(md5);
             } else {
+
+                try {
+
+                    //dataurl = btoa(dataurl);
+
+                    console.warn(`data url for md5: ${md5}`);
+                    console.warn(dataurl);
+                    
+                } catch (error) {
+                    console.error("nextStep base64 decode error: " + error);
+                }
+
                 var base64 = IO.getImageDataURL(md5, dataurl);
                 IO.getImagesInSVG(str, function () {
                     fcn(base64);
@@ -153,6 +163,7 @@ export default class IO {
             for (var i = 0; i < images.length; i++) {
                 var dataurl = images[i].getAttribute('xlink:href');
                 var svgimg = document.createElement('img');
+                console.log("In iPad/IO.js in getImagesInSVG i = " + i + "; and dataurl = " + dataurl);
                 svgimg.src = dataurl;
                 if (!svgimg.complete) {
                     svgimg.onload = function () {
@@ -405,6 +416,21 @@ export default class IO {
             zipFile = new JSZip();
             zipFile.folder('project');
 
+            // Removing the path is necessary to find files when loading
+            // the archive on another computer or OC
+            var removingStoragePathFromMd5 = function(jsonData) {
+                for (let key of Object.keys(jsonData)) {
+                    if(typeof jsonData[key] === "object"){
+                        removingStoragePathFromMd5(jsonData[key]);
+                    }else{
+                        if(key === "md5"){
+                            jsonData[key] = jsonData[key].replace(iOS.storagePath, "")
+                        }
+                    }
+                }
+            }
+            removingStoragePathFromMd5(jsonData);
+
             var projectDataForZip = JSON.stringify(jsonData);
             zipFile.file('project/data.json', projectDataForZip, {});
 
@@ -414,7 +440,11 @@ export default class IO {
             // Generic function for adding media to the zip file
             var addMediaToZip = function (folder, md5) {
                 var addB64ToZip = function (b64data) {
-                    zipFile.file('project/' + folder + '/' + md5, b64data, {
+                    // folder structure fix
+                    let md5Array = md5.split('/');
+                    let md5WithoutPath = md5Array[md5Array.length - 1];
+
+                    zipFile.file('project/' + folder + '/' + md5WithoutPath, b64data, {
                         base64: true,
                         createFolders: true
                     });
@@ -574,6 +604,9 @@ export default class IO {
             'base64': true
         });
 
+        //receivedZip.loadAsync(b64data,/*{'base64': true }*/).then(zip =>{
+
+
         // To store character MD5 -> character name map
         // The character name is stored in the project JSON; when we load
         // the actual SVG asset, we need the associated name for storage in the DB
@@ -603,6 +636,21 @@ export default class IO {
 
                 // Build map of character filename -> character name
                 var projectData = jsonData.json;
+
+                // return storagePath in md5
+                var insertStoragePathToMd5 = function(jsonData) {
+                    for (let key of Object.keys(jsonData)) {
+                        if(typeof jsonData[key] === "object"){
+                            insertStoragePathToMd5(jsonData[key]);
+                        }else{
+                            if(key === "md5" && jsonData[key].length > 35){
+                                jsonData[key] = iOS.storagePath + jsonData[key];
+                            }
+                        }
+                    }
+                }
+                insertStoragePathToMd5(projectData);
+
                 for (var p = 0; p < projectData.pages.length; p++) {
                     var pageReference = projectData.pages[p];
                     var page = projectData[pageReference];
@@ -626,7 +674,10 @@ export default class IO {
                   let  base64toBlob =  function(base64Data, contentType) {
                       contentType = contentType || '';
                       var sliceSize = 1024;
-                      base64Data =  base64Data.replace("data:;base64,","");
+                      base64Data =  base64Data.replace("data:application/octet-stream;base64,","");
+                      if (node_process.platform === "win32"){
+                        base64Data = base64Data.replace("data:;base64,", "");
+                      }
                       var byteCharacters = atob(base64Data);
                       var bytesLength = byteCharacters.length;
                       var slicesCount = Math.ceil(bytesLength / sliceSize);
@@ -725,6 +776,18 @@ export default class IO {
 
             // File data and base64-encoded data
             var data = file.asBinary();
+
+             try {
+
+                data = atob(data);
+                console.warn("Succesfull decode");
+                
+            } catch (error) {
+
+                console.error("Decode error:" + error);
+                
+            } 
+
             var b2data = btoa(data);
 
             if (subFolder == 'thumbnails' || subFolder == 'sounds') {
@@ -848,5 +911,10 @@ export default class IO {
             }
         }
         refreshLobby();
+
+    //   }).catch(err => {
+
+    //         console.error(err);
+    //   });
     }
 }

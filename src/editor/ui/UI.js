@@ -378,6 +378,7 @@ export default class UI {
         // TODO: check asset not exist
 
 
+       file_name = iOS.storagePath + file_name; 
 
         var table = (asset_type == "sprite")?"customsprites":"custombkgs";
 
@@ -416,9 +417,9 @@ export default class UI {
       var contents = e.target.result;
 
 
-      if (contents.indexOf("data:application/zip;base64,") != -1){
+      if (contents.indexOf("data:application/octet-stream;base64,") != -1){
 
-          contents = e.target.result.replace("data:application/zip;base64,", "");
+          contents = e.target.result.replace("data:application/octet-stream;base64,", "");
 
           var receivedZip = JSZip();
 
@@ -609,7 +610,7 @@ if (isAndroid){
   static SjrRead_Android(data){
 
 
-    var contents = data.replace("data:;base64,", "");
+    var contents = data.replace("data:application/octet-stream;base64,", "");
     iOS.loadProjectFromSjr(contents);
 
   }
@@ -622,7 +623,12 @@ if (isAndroid){
      }
      var reader = new FileReader();
      reader.onload = function(e){
-        var contents = e.target.result.replace("data:;base64,", "");
+        var contents = e.target.result.replace("data:application/octet-stream;base64,", "");
+
+        if (node_process.platform === "win32"){
+            contents = e.target.result.replace("data:;base64,", "");
+        }
+
         iOS.loadProjectFromSjr(contents);
      };
      reader.readAsDataURL(file);
@@ -793,18 +799,18 @@ if (isAndroid){
 
 
 
-        function readFile(e){
+      /*  function readFile(e){
            var file = e.target.files[0];
            if (!file) {
               return;
            }
            var reader = new FileReader();
            reader.onload = function(e){
-              var contents = e.target.result.replace("data:;base64,", "");
+              var contents = e.target.result.replace("data:application/octet-stream;base64,", "");
               iOS.loadProjectFromSjr(contents);
            };
            reader.readAsDataURL(file);
-        }
+        } */
 
 
 
