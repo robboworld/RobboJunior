@@ -1,2 +1,25 @@
-/node_modules
-/package-lock.json
+# Зависимости
+node_modules/
+
+# Собранный GUI: всегда собирается из desktop/src (scripts/build.sh)
+/desktop/src/build/
+/desktop/app.bundle.js
+/desktop/app.bundle.js.map
+
+# Runtime (Electron, Java 8) — скачивается scripts/fetch-runtime.sh
+/runtime/
+
+# Промежуточные каталоги и результаты упаковки
+/packaging/*/output/
+/packaging/*/stage/
+/packaging/linux/rpmbuild/
+
+# Логи сборки
+/.build-logs/
+
+# Локальные настройки и секреты (в git только *.example)
+/config/*.conf
+*.keystore
+*.jks
+
+.DS_Store

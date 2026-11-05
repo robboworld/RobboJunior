@@ -1,0 +1,27 @@
+# Всё, что выполняется или читается на Linux при сборке/установке, — только LF,
+# независимо от core.autocrlf на машине разработчика. Остальные файлы git не трогает.
+*.sh                        text eol=lf
+scripts/**                  text eol=lf
+packaging/linux/**          text eol=lf
+packaging/android/**        text eol=lf
+packaging/common/panel/*.ini text eol=lf
+packaging/common/panel/i18n.* text eol=lf
+.nvmrc                      text eol=lf
+CHANGELOG.md                text eol=lf
+
+# Windows-файлы
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.nsi  text eol=crlf
+*.nsh  text eol=crlf
+
+# Бинарные файлы — без преобразований
+*.jar  binary
+*.dll  binary
+*.exe  binary
+*.sys  binary
+*.cat  binary
+*.so   binary
+*.ico  binary
+*.png  binary
+*.hex  -text
