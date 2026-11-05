@@ -25,3 +25,8 @@ CHANGELOG.md                text eol=lf
 *.ico  binary
 *.png  binary
 *.hex  -text
+
+# Файлы, в которые scripts/sync-version.sh пишет версию
+desktop/package.json        text eol=lf
+desktop/version             text eol=lf
+desktop/home.html           text eol=lf
