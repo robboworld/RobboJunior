@@ -12,8 +12,8 @@ CHANGELOG.md                text eol=lf
 # Windows-файлы
 *.bat  text eol=crlf
 *.cmd  text eol=crlf
-*.nsi  text eol=crlf
-*.nsh  text eol=crlf
+*.nsi  text eol=lf
+*.nsh  text eol=lf
 
 # Бинарные файлы — без преобразований
 *.jar  binary
@@ -30,3 +30,6 @@ CHANGELOG.md                text eol=lf
 desktop/package.json        text eol=lf
 desktop/version             text eol=lf
 desktop/home.html           text eol=lf
+
+# Драйверы Windows (копия из RS3_Assembly) — как есть: .inf/.cat подписаны, менять байты нельзя
+packaging/common/drivers/** -text -eol
