@@ -28,7 +28,7 @@ Unicode True
 !include x64.nsh
 !include MUI2.nsh
 
-!define VERSION "1.0.0-alpha"
+!define VERSION "1.0.0"
 !define PRODUCT_NAME "Robbo Junior"
 !define REG_KEY "robboJunior"
 ; Ярлык запускает Java-панель; она сама открывает окно Junior (jr\junior.exe)

@@ -1,5 +1,5 @@
 Package: robboJunior
-Version: 1.0.0~alpha
+Version: 1.0.0
 Section: education
 Priority: optional
 Architecture: amd64
