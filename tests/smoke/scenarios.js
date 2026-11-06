@@ -153,19 +153,49 @@ module.exports = [
   }],
 
   ['старый профиль: все проекты открываются', async t => {
+    const openProject = async id => {
+      await t.open('home.html')
+      await homeLoaded(t)
+      await t.until('проект ' + id, () => t.ev(`!!document.getElementById('${id}')`), 15000)
+      await t.click(`document.getElementById('${id}')`)
+      await editorLoaded(t)
+      await t.sleep(500)
+      assert(!(await t.ev(`[...document.querySelectorAll('canvas')].some(c => c.style.zIndex == '1000')`)), `проект ${id}: сообщение об ошибке`)
+    }
     await t.open('home.html')
     await homeLoaded(t)
     await t.until('проекты', async () => (await projects(t)).length > 0, 15000)
     const ids = await projects(t)
-    for (const id of ids) {
-      await t.open('home.html')
-      await homeLoaded(t)
-      await t.until('проект ' + id, () => t.ev(`!!document.getElementById('${id}')`))
-      await t.click(`document.getElementById('${id}')`)
-      await editorLoaded(t)
-      assert(!(await t.ev(`[...document.querySelectorAll('canvas')].some(c => c.style.zIndex == '1000')`)), `проект ${id}: сообщение об ошибке`)
-    }
+    for (const id of ids) await openProject(id)
     console.log(`       открыто проектов: ${ids.length}`)
+    if (process.env.RJ_TEST_PROFILE !== 'fixture') return
+
+    // What was made in the real 0.0.23, see tests/README.md
+    assert.deepStrictEqual([...ids].sort(), ['1', '2', '3', '4'], 'не все проекты 0.0.23')
+    await openProject('1')
+    await openRobotTab(t)
+    const types = await t.ev(`[...document.querySelectorAll('#scripts *')].filter(e => e.owner && e.owner.blocktype).map(e => e.owner.blocktype)`)
+    for (const type of ['onflag', 'robot_forward', 'robot_left', 'robot_back']) assert(types.includes(type), 'нет блока ' + type)
+    await openProject('2')
+    assert.strictEqual(await t.ev(`document.querySelectorAll('.pagethumb').length`), 3, 'нет страниц')
+    assert(await t.ev(`document.querySelectorAll('.spritethumb').length >= 2`), 'нет спрайта ROBBO')
+    assert(await t.ev(`[...document.querySelectorAll('#stage *')].some(e => e.owner && e.owner.str == 'Привет')`), 'нет текста')
+    await openProject('4')
+    await t.until('записанный звук', () => t.ev(`window.ScratchAudio.recordedSounds.length == 1 && window.ScratchAudio.recordedSounds[0].sound_name.startsWith('SND_')`))
+    assert(await t.ev(`!!window.ScratchAudio.projectSounds[window.ScratchAudio.recordedSounds[0].sound_name]`), 'звук не загружен')
+  }],
+
+  ['.sjr из версии 0.0.23 загружается', async t => {
+    await t.open('home.html')
+    await homeLoaded(t)
+    await t.until('главный экран загружен', async () => (await projects(t)).length > 0, 15000)
+    const before = (await projects(t)).length
+    const file = path.join(process.env.RJ_TEST_FIXTURES, 'project-0.0.23.sjr')
+    await t.ev(`window.OS.loadProjectFromSjr(${JSON.stringify(fs.readFileSync(file).toString('base64'))}); 1`)
+    await t.until('загруженный проект', async () => {
+      await t.sleep(300)
+      return (await t.ev(`!!document.getElementById('newproject')`)) && (await projects(t)).length === before + 1
+    }, 15000)
   }],
 
   ['число в блоке вводится с клавиатуры', async t => {
