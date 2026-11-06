@@ -82,6 +82,10 @@ export default class Localization {
               currentLocale = localizationCookie;
           }
           var topLevel = currentLocale.split('-')[0];
+          // Regional variants have files of their own: pt-br.json, zh-cn.json
+          if (topLevel === 'zh' || topLevel === 'pt') {
+              topLevel = currentLocale.toLowerCase();
+          }
 
           // Get messages
           IO.requestFromServer(localizationRoot + 'localizations/' + topLevel + '.json', (result) => {
