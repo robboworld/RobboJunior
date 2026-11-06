@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Robbo Junior
+Comment=Robot control panel for Robbo Junior
+Exec=robboJunior
+Icon=robboJunior
+Terminal=false
+Type=Application
+NoDisplay=true
+StartupWMClass=scratchduino-robot-Main

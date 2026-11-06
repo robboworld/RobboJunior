@@ -37,6 +37,7 @@ install -D -m 755 /dev/stdin "$ROOT/usr/bin/robboJunior" <<EOF
 exec $RJ_INSTALL_DIR_LINUX/robboJunior "\$@"
 EOF
 install -D -m 644 "$FILES/robboJunior.desktop" "$ROOT/usr/share/applications/robboJunior.desktop"
+install -D -m 644 "$FILES/robboJunior-panel.desktop" "$ROOT/usr/share/applications/robboJunior-panel.desktop"
 install -D -m 644 "$RJ_PACKAGING/common/icons/robbojunior.png" "$ROOT/usr/share/pixmaps/robboJunior.png"
 install -D -m 644 "$FILES/86-robbojunior-ch340.rules" "$ROOT/usr/lib/udev/rules.d/86-robbojunior-ch340.rules"
 

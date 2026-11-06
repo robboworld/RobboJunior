@@ -57,5 +57,6 @@ fi
 /opt/robboJunior
 /usr/bin/robboJunior
 /usr/share/applications/robboJunior.desktop
+/usr/share/applications/robboJunior-panel.desktop
 /usr/share/pixmaps/robboJunior.png
 /usr/lib/udev/rules.d/86-robbojunior-ch340.rules

@@ -8,5 +8,6 @@ Icon=robboJunior
 Terminal=false
 Type=Application
 StartupNotify=true
+StartupWMClass=RobboJunior
 Categories=Education;Development;
 Keywords=programming;scratchjr;education;robbo;blocks;robot;
