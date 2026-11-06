@@ -168,19 +168,56 @@ module.exports = [
     console.log(`       открыто проектов: ${ids.length}`)
   }],
 
-  // The help tabs are hidden in the interface (Lobby.js), the page is opened by address. The samples screen
-  // is hidden too and is not tested: samples/Friends.txt, the only one in media.json, needs sprites and
-  // backgrounds that are no longer in svglibrary/.
-  ['справка: все вкладки', async t => {
-    await t.open('home.html?place=book')
-    const helpText = () => t.ev(`(() => { const f = document.querySelector('iframe'); return f && f.contentDocument.body ? f.contentDocument.body.innerText.length : 0 })()`)
+  // The samples screen is hidden and is not tested: samples/Friends.txt, the only one in media.json,
+  // needs sprites and backgrounds that are no longer in svglibrary/.
+  ['справка: кнопка на главном экране и все вкладки', async t => {
+    await t.open('home.html')
+    await homeLoaded(t)
+    const helpText = () => t.ev(`(() => { const f = document.querySelector('iframe'); return f && f.contentDocument.body ? f.contentDocument.body.innerText : '' })()`)
+    // The home screen ignores clicks while it loads the projects
+    await t.until('страница о программе', async () => {
+      await t.click(`document.getElementById('booktab')`)
+      await t.sleep(500)
+      return /Что такое Robbo Junior/.test(await helpText())
+    }, 12000)
     for (const tab of ['abouttab', 'interfacetab', 'painttab', 'blockstab']) {
       await t.until('вкладка ' + tab, async () => {
         await t.click(`document.getElementById('${tab}')`)
-        return (await t.ev(`document.getElementById('${tab}').className.includes('on')`)) && (await helpText()) > 20
+        return (await t.ev(`document.getElementById('${tab}').className.includes('on')`)) && (await helpText()).length > 20
       })
+      if (tab !== 'abouttab') assert(!/ScratchJr/.test(await helpText()), tab + ': осталось название ScratchJr')
     }
     await t.until('раздел робота', () => t.ev(`(() => { const e = document.querySelector('iframe').contentDocument.getElementById('robot-block-category-header'); return !!e && e.textContent == 'Блоки робота' })()`))
+  }],
+
+  ['справка: номера на схеме нажимаются мышью', async t => {
+    await t.click(`document.getElementById('interfacetab')`)
+    await t.until('схема', () => t.ev(`!!document.querySelector('iframe').contentDocument.getElementById('interface-button-robot')`))
+    await t.sleep(300)
+    const frame = `document.querySelector('iframe')`
+    const number = `${frame}.contentDocument.querySelector('#interface-button-robot .interface-button-text')`
+    const box = await t.ev(`(() => { const f = ${frame}.getBoundingClientRect(); const r = ${number}.getBoundingClientRect(); return {x: Math.round(f.x + r.x + r.width / 2), y: Math.round(f.y + r.y + r.height / 2)} })()`)
+    t.move(box.x, box.y)
+    await t.sleep(50)
+    t.wc.sendInputEvent({type: 'mouseDown', x: box.x, y: box.y, button: 'left', clickCount: 1})
+    await t.sleep(80)
+    t.wc.sendInputEvent({type: 'mouseUp', x: box.x, y: box.y, button: 'left', clickCount: 1})
+    await t.until('описание индикатора', () => t.ev(`${frame}.contentDocument.getElementById('interface-key-header').textContent.includes('Индикатор робота')`))
+
+  }],
+
+  ['палитра на экране 4:3', async t => {
+    const window = BrowserWindow.getAllWindows()[0]
+    window.setContentSize(1024, 768)
+    await t.sleep(300)
+    await t.open('home.html')
+    await homeLoaded(t)
+    await t.click(`document.getElementById('newproject')`)
+    await editorLoaded(t)
+    await t.sleep(500)
+    const top = id => t.ev(`Math.round(document.getElementById('${id}').getBoundingClientRect().top)`)
+    assert.strictEqual(await top('palette'), await top('selectors'), 'палитра ушла со строки категорий')
+    window.setContentSize(1280, 800)
   }],
 
   ['обновления: зеркала, один показ на версию, чужая ссылка', async t => {

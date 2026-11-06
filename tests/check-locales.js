@@ -18,6 +18,13 @@ for (const locale of Object.values(load('settings.json').supportedLocales)) {
   if (missing.length) problems.push(`${locale}: нет ${missing.slice(0, 5).join(', ')}`)
 }
 
+// The program is called Robbo Junior everywhere; only the page about its origin names ScratchJr
+for (const locale of Object.values(load('settings.json').supportedLocales)) {
+  const messages = load(`localizations/${locale.split('-')[0]}.json`)
+  const old = Object.keys(messages).filter(key => key !== 'ABOUT_BASED_ON_DESCRIPTION' && /ScratchJr/.test(messages[key]))
+  if (old.length) problems.push(`${locale}: ScratchJr в ${old.slice(0, 5).join(', ')}`)
+}
+
 const missingNames = [].concat(
   media.sprites.map(item => 'CHARACTER_' + item.md5),
   media.backgrounds.filter(item => item.md5 !== 'separator').map(item => 'BACKGROUND_' + item.md5)

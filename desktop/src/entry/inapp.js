@@ -4,17 +4,12 @@ import Localization from '../utils/Localization';
 export function inappAbout () {
     gn('aboutScratchjrTitle').textContent = Localization.localize('ABOUT_SCRATCHJR');
     gn('aboutWhatIs').textContent = Localization.localize('ABOUT_WHAT_IS');
-    gn('aboutDescription').innerHTML = Localization.localize('ABOUT_DESCRIPTION') + '<br/><br/>' +
-        Localization.localize('ABOUT_INSPIRED_BY');
-    gn('aboutWhyCreate').textContent = Localization.localize('ABOUT_WHY_CREATE');
-    gn('aboutWhyCreateDescription').innerHTML = Localization.localize('ABOUT_WHY_CREATE_DESCRIPTION');
-    gn('aboutWhoCreated').textContent = Localization.localize('ABOUT_WHO_CREATED');
-    gn('aboutWhoCreatedDescription').innerHTML = (
-        Localization.localize('ABOUT_WHO_CREATED_DESCRIPTION'));
-    gn('aboutWhoSupported').textContent = Localization.localize('ABOUT_WHO_SUPPORTED');
-    gn('aboutWhoSupportedDescription').innerHTML = (
-        Localization.localize('ABOUT_WHO_SUPPORTED_DESCRIPTION')
-    );
+    gn('aboutDescription').textContent = Localization.localize('ABOUT_DESCRIPTION');
+    gn('aboutRobot').textContent = Localization.localize('ABOUT_ROBOT');
+    gn('aboutRobotDescription').textContent = Localization.localize('ABOUT_ROBOT_DESCRIPTION');
+    gn('aboutBasedOn').textContent = Localization.localize('ABOUT_BASED_ON');
+    gn('aboutBasedOnDescription').textContent = Localization.localize('ABOUT_BASED_ON_DESCRIPTION');
+    gn('aboutLicense').textContent = Localization.localize('ABOUT_LICENSE');
 
     // PBS-only
     if (window.Settings.edition == 'PBS') {
@@ -34,19 +29,20 @@ export function inappInterfaceGuide () {
 
     var interfaceKeys = [
         'SAVE',
-        'STAGE',
+        'ROBOT',
         'PRESENTATION_MODE',
         'GRID',
+        'STAGE',
         'CHANGE_BG',
         'ADD_TEXT',
         'RESET_CHAR',
         'GREEN_FLAG',
+        'SAVE_FILE',
         'PAGES',
-        'PROJECT_INFO',
         'UNDO_REDO',
-        'PROGRAMMING_SCRIPT',
-        'PROGRAMMING_AREA',
         'BLOCKS_PALETTE',
+        'PROGRAMMING_AREA',
+        'PROGRAMMING_SCRIPT',
         'BLOCKS_CATEGORIES',
         'CHARACTERS'
     ];
@@ -76,6 +72,7 @@ export function inappInterfaceGuide () {
         }
     };
     document.addEventListener('touchstart', switchHelp, false);
+    document.addEventListener('mousedown', switchHelp, false);
 }
 
 export function inappPaintEditorGuide () {
@@ -94,6 +91,7 @@ export function inappPaintEditorGuide () {
         'DUPLICATE',
         'ROTATE',
         'DRAG',
+        'CANCEL',
         'SAVE',
         'FILL',
         'CAMERA',
@@ -126,6 +124,7 @@ export function inappPaintEditorGuide () {
         }
     };
     document.addEventListener('touchstart', switchHelp, false);
+    document.addEventListener('mousedown', switchHelp, false);
 }
 
 export function inappBlocksGuide () {

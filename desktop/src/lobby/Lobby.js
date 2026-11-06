@@ -63,13 +63,13 @@ export default class Lobby {
 //AZ
         gn('helptab').onmousedown = gn('helptab').ontouchstart; */
 
-    /*    gn('booktab').ontouchstart = function () { //modified_by_Yaroslav
+        gn('booktab').ontouchstart = function () {
             if (gn('booktab').className != 'book on') {
                 Lobby.setPage('book');
             }
         };
 //AZ
-        gn('booktab').onmousedown = gn('booktab').ontouchstart; */
+        gn('booktab').onmousedown = gn('booktab').ontouchstart;
 
 
         gn('geartab').ontouchstart = function () {
