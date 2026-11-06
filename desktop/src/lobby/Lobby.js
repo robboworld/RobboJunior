@@ -451,7 +451,7 @@ export default class Lobby {
 
         var storagePath = newHTML('div', 'storage-path', p);
         var sp = iOS.getStoragePath;
-        storagePath.textContent = Localization.localize('StoragePath: ') + sp;
+        storagePath.textContent = Localization.localize('STORAGE_PATH') + ' ' + sp;
     }
 
     static setSubMenu (page) {
