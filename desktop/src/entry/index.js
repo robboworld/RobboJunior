@@ -1,6 +1,6 @@
 import ScratchAudio from '../utils/ScratchAudio';
 import {gn, getUrlVars, isAndroid, isiOS} from '../utils/lib';
-import iOS from '../iPad/iOS';
+import OS from '../tablet/OS';
 import UI from '../editor/ui/UI';
 import Localization from '../utils/Localization';
 
@@ -56,9 +56,9 @@ function indexFirstTime () {
         gn('blueguy').className = 'blue show';
         gn('redguy').className = 'red show';
     }
-    iOS.askpermission(); // ask for sound recording
+    OS.askpermission(); // ask for sound recording
     setTimeout(function () {
-        iOS.hidesplash(doit);
+        OS.hidesplash(doit);
     }, 500);
     function doit () {
         window.ontouchend = function () {
@@ -95,7 +95,7 @@ function indexLoadOptions () {
 }
 
 function indexGohome () {
-    iOS.setfile('homescroll.sjr', 0, function () {
+    OS.setfile('homescroll.sjr', 0, function () {
         doNext();
     });
     function doNext () {

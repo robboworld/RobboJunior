@@ -32,7 +32,7 @@ console.log("homedir = " + homedir);
 console.log("path_postfix = " + path_postfix);
 console.log("node_process.platform = " + node_process.platform);
 
-export default class iOS {
+export default class OS {
 
    // Getters/setters for properties used in other classes
    static get path () {
@@ -425,7 +425,7 @@ export default class iOS {
                };
                reader.readAsDataURL(data);
             } else {
-               console.log("In iPad/iOS.js in io_setmedianame data.length = " + data.length);
+               console.log("In tablet/OS.js in io_setmedianame data.length = " + data.length);
                //data = data.toString();
                tabletInterface.hidden_func_write_file(name, extension, data, callback, false);
             }
@@ -651,7 +651,7 @@ export default class iOS {
             node_fs.readFile(sFile, (err, data) => {
                if(err) console.error(err);
                else{
-                  console.log("iOS:io_loadFileAPIBina...:Trying to read file " + sFile);
+                  console.log("OS:io_loadFileAPIBina...:Trying to read file " + sFile);
                   var resp = `data:${dataType.type}/${dataType.ext};base64,${data}`;
 
                   if(data.constructor.name == "Buffer"){
@@ -670,7 +670,7 @@ export default class iOS {
                            resp = `data:${dataType.type}/${dataType.ext};base64,${data}`;
                            
                        } catch (error) {
-                           console.error("iOS:io_loadFileAPIBina base64 decode error: " + error);
+                           console.error("OS:io_loadFileAPIBina base64 decode error: " + error);
                        }
 
                      }
@@ -1105,7 +1105,7 @@ export default class iOS {
          if (typeof (window.tablet) != 'object') {
             // Come back in 100ms
             setTimeout(function () {
-                iOS.waitForInterface(fcn);
+                OS.waitForInterface(fcn);
             }, 100);
          } else {
             // All set to run commands
@@ -1248,7 +1248,7 @@ export default class iOS {
       var keylist = [fieldname + ' = ?', 'mtime = ?'];
       json.values = [val, (new Date()).getTime().toString()];
       json.stmt = 'update ' + db + ' set ' + keylist.toString() + ' where id = ' + id;
-      iOS.stmt(json, fcn);
+      OS.stmt(json, fcn);
    }
 
    static loadFileAPIBinaryURL(sFile, callback){
@@ -1267,7 +1267,7 @@ export default class iOS {
          //AZ
          if(isTablet){
             var result = tabletInterface.io_getmedialen(file, key);
-            iOS.processdata(key, 0, result, '', whenDone);
+            OS.processdata(key, 0, result, '', whenDone);
          } else {
             tabletInterface.io_loadFileAPI(file, fcn);
          }
@@ -1284,13 +1284,13 @@ export default class iOS {
 
    static processdata (key, off, len, oldstr, fcn) {
       if (len == 0) {
-         iOS.getmediadone(key);
+         OS.getmediadone(key);
          fcn(oldstr);
          return;
       }
       var newlen = (len < 100000) ? len : 100000;
-      iOS.getmediadata(key, off, newlen, function (str) {
-         iOS.processdata(key, off + newlen, len - newlen, oldstr + str, fcn);
+      OS.getmediadata(key, off, newlen, function (str) {
+         OS.processdata(key, off + newlen, len - newlen, oldstr + str, fcn);
       });
    }
 
@@ -1365,7 +1365,7 @@ export default class iOS {
       //     }
       tabletInterface.io_remove(str,(result_object) => {
          if (fcn){
-            fcn("iOS remove:" +str + " "  + result_object.error.err_msg);
+            fcn("OS remove:" +str + " "  + result_object.error.err_msg);
          }
       });     
    }
@@ -1616,4 +1616,4 @@ export default class iOS {
 }
 
 // Expose iOS methods for ScratchJr tablet sharing callbacks
-window.iOS = iOS;
+window.OS = OS;

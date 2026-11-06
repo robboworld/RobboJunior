@@ -1,6 +1,6 @@
 import {gn, newHTML} from '../utils/lib';
 import Localization from '../utils/Localization';
-import IO from '../iPad/IO';
+import IO from '../tablet/IO';
 
 /*
  What's new: release messages from whats-new.json, written into the build by scripts/build.sh, so it works

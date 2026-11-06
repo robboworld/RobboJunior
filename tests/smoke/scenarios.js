@@ -145,7 +145,7 @@ module.exports = [
     await homeLoaded(t)
     await t.until('проект в списке', async () => (await projects(t)).length > 0)
     const before = (await projects(t)).length
-    await t.ev(`window.iOS.loadProjectFromSjr(${JSON.stringify(fs.readFileSync(file).toString('base64'))}); 1`)
+    await t.ev(`window.OS.loadProjectFromSjr(${JSON.stringify(fs.readFileSync(file).toString('base64'))}); 1`)
     await t.until('загруженный проект', async () => {
       await t.sleep(300)
       return (await t.ev(`!!document.getElementById('newproject')`)) && (await projects(t)).length === before + 1

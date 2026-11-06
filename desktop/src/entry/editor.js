@@ -1,14 +1,14 @@
 import ScratchJr from '../editor/ScratchJr';
-import iOS from '../iPad/iOS';
+import OS from '../tablet/OS';
 import Camera from '../painteditor/Camera';
 import Record from '../editor/ui/Record';
 
 export function editorMain() {
-    iOS.getsettings(doNext);
+    OS.getsettings(doNext);
     function doNext(str) {
         var list = str.split(',');
         // iOS.path = list[1] == '0' ? list[0] + '/' : undefined;
-        iOS.path = list[1] == '0' ? list[0] + '/' : '';
+        OS.path = list[1] == '0' ? list[0] + '/' : '';
         if (list.length > 2) {
             Record.available = list[2] == 'YES' ? true : false;
         }
