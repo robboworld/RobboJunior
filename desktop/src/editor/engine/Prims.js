@@ -66,6 +66,7 @@ export default class Prims {
          Prims.table.robot_back = Robot.Robot_back;
          Prims.table.robot_left = Robot.Robot_left;
          Prims.table.robot_right = Robot.Robot_right;
+         Prims.table.robot_stop = Robot.Robot_stop;
 
    /*
         Prims.robot = {};

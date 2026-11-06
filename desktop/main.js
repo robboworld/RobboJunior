@@ -9,6 +9,8 @@ const Menu = electron.Menu
 const path = require('path')
 const url = require('url')
 
+const updateCheck = require('./update-check')
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -22,6 +24,7 @@ function createWindow () {
   {
    webPreferences: {
        nodeIntegration: true,
+       nodeIntegrationInSubFrames: true, // help pages load the same bundle in an iframe
        contextIsolation: false, 
        width: 800, 
        height: 600 
@@ -39,6 +42,8 @@ function createWindow () {
   // mainWindow.webContents.openDevTools()
 
    mainWindow.maximize();
+
+   updateCheck.start(mainWindow);
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {

@@ -135,6 +135,7 @@ export function inappBlocksGuide () {
     gn('purple-block-category-header').textContent = Localization.localize('BLOCKS_LOOKS_BLOCKS');
     gn('green-block-category-header').textContent = Localization.localize('BLOCKS_SOUND_BLOCKS');
     gn('orange-block-category-header').textContent = Localization.localize('BLOCKS_CONTROL_BLOCKS');
+    gn('robot-block-category-header').textContent = Localization.localize('BLOCKS_ROBOT_BLOCKS');
     gn('red-block-category-header').textContent = Localization.localize('BLOCKS_END_BLOCKS');
 
     var blockDescriptionKeys = [
@@ -192,6 +193,16 @@ export function inappBlocksGuide () {
         'BLOCKS_END_DESCRIPTION',
         'BLOCKS_REPEAT_FOREVER',
         'BLOCKS_REPEAT_FOREVER_DESCRIPTION',
+        'BLOCKS_ROBOT_FORWARD',
+        'BLOCKS_ROBOT_FORWARD_DESCRIPTION',
+        'BLOCKS_ROBOT_BACK',
+        'BLOCKS_ROBOT_BACK_DESCRIPTION',
+        'BLOCKS_ROBOT_LEFT',
+        'BLOCKS_ROBOT_LEFT_DESCRIPTION',
+        'BLOCKS_ROBOT_RIGHT',
+        'BLOCKS_ROBOT_RIGHT_DESCRIPTION',
+        'BLOCKS_ROBOT_STOP',
+        'BLOCKS_ROBOT_STOP_DESCRIPTION',
         'BLOCKS_GO_TO_PAGE',
         'BLOCKS_GO_TO_PAGE_DESCRIPTION'
     ];

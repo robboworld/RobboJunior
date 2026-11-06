@@ -150,15 +150,21 @@ export default class MediaLib {
         });
     }
 
+    // Library items without a translation keep their name from media.json
+    static localizedName (key, name) {
+        var localized = Localization.localize(key);
+        return (localized == key) ? name : localized;
+    }
+
     static localizeMediaNames () {
         // Localize names of sprites
         for (let i = 0; i < sprites.length; i++) {
-            sprites[i].name = Localization.localize('CHARACTER_' + sprites[i].md5);
+            sprites[i].name = MediaLib.localizedName('CHARACTER_' + sprites[i].md5, sprites[i].name);
         }
 
         // Localize names of backgrounds
         for (let i = 0; i < backgrounds.length; i++) {
-            backgrounds[i].name = Localization.localize('BACKGROUND_' + backgrounds[i].md5);
+            backgrounds[i].name = MediaLib.localizedName('BACKGROUND_' + backgrounds[i].md5, backgrounds[i].name);
         }
     }
 

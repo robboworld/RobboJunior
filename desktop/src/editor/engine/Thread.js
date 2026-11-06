@@ -1,4 +1,5 @@
 import Prims from './Prims';
+import Robot from './Robot';
 import Grid from '../ui/Grid';
 import Vector from '../../geom/Vector';
 
@@ -131,6 +132,12 @@ export default class Thread {
                 this.audio.stop();
                 this.audio = undefined;
             }
+            break;
+        case 'robot_forward':
+        case 'robot_back':
+        case 'robot_left':
+        case 'robot_right':
+            Robot.cancel(this);
             break;
         case 'hide':
             s.div.style.opacity = 0;
