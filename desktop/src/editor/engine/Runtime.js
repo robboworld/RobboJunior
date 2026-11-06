@@ -2,6 +2,8 @@ import ScratchJr from '../ScratchJr';
 import Project from '../ui/Project';
 import Prims from './Prims';
 import Thread from './Thread';
+import Alert from '../ui/Alert';
+import Localization from '../../utils/Localization';
 import {gn,isTablet} from '../../utils/lib';
 
 
@@ -39,104 +41,65 @@ export default class Runtime {
     }
 
    get_robot_version_and_tickTask(rt){
+     if ((rt.robot_version == undefined) && (!isTablet) && (!rt.start_robot_version_checking_process)){
+        rt.detect_robot_version();
+     }
+     rt.tickTask();
+   }
 
+   detect_robot_version(){
+     let rt = this;
      let robot_version_table = [0,3];
+     let checked_versions_count = 0;
+     let detection = {};
 
-     let checked_versions_count = 0
+     // A script started meanwhile begins a new detection: answers to the old one are ignored.
+     rt.robot_detection = detection;
+     rt.start_robot_version_checking_process = true;
 
-     let robot_version;
-
-
-    if ((((rt.robot_version == undefined)  && (!isTablet)/*&& (!rt.start_robot_version_checking_process)*/) /*|| (rt.robot_version == -1)*/) /*&& (!rt.start_robot_version_checking_process)*/){
-    //alert(this.robot_version);
-
-    //alert("tick_task");
-
-    //  window.clearInterval(this.intervalId);
-
-
-    rt.start_robot_version_checking_process = true;
-
-     for (var g=0;g< robot_version_table.length;g++){
-     //alert(gi);
-        rt.check_robot_version(robot_version_table[g],g)
-            .then(
-                (response) => {
-
-                            checked_versions_count++;
-
-                                var gi = response.gi;
-
-                              console.log(`[src::editor::engine::Runtime.js::robot_response:] ${response.response_data} gi:${gi}`);
-
-                          // if (rt.thread != undefined){
-
-                            //   alert("gi_1: " + gi);
-                             if (response.response_data.indexOf("error") == -1){
-                                rt.robot_version = robot_version_table[gi];
-
-                              //  rt.thread.robot_version = rt.robot_version;
-
-                              console.log("[src::editor::engine::Runtime.js::rt.robot_version: ] " + rt.robot_version);
-
-                                gn("robot_connection_status").style.backgroundColor = "green";
-
-                             rt.tickTask();
-
-                            /* this.intervalId = window.setInterval(function () {
-                                 rt.get_robot_version_and_tickTask(rt);  //rt.tickTask()
-                             }, 32); */
-
-                           }else if ( checked_versions_count >= 2 /*gi ==  robot_version_table.length-1*/){
-
-                              //  alert("gi_2: " + gi);
-                                 rt.robot_version = -1;
-
-                                  console.log("[src::editor::engine::Runtime.js::rt.robot_version: ] " + rt.robot_version);
-
-                                  console.log("Не возможно определить версию робота. Проверьте подключение.");
-
-                                  gn("robot_connection_status").style.backgroundColor = "red";
-
-                              //    alert("Не возможно определить версию робота. Проверьте подключение.");
-
-
-                               }
-
-
-
-                            //    }
-                              },
-                 error => {
-
-                   rt.robot_version = -1;
-
-                     gn("robot_connection_status").style.backgroundColor = "red";
-
-                  // alert(`Ошибка: ${error}`);
-                /*
-                   this.intervalId = window.setInterval(function () {
-                       rt.get_robot_version_and_tickTask(rt);  //rt.tickTask()
-                   }, 32); */
-
-               }
-            );
-
-     /*
-        if ((rt.robot_version != undefined) || (rt.robot_version == -1)) {
-
-        // alert("rt.robot_version: " + rt.robot_version);
-          break;
-        } */
+     function finish_detection(robot_version){
+        rt.robot_version = robot_version;
+        rt.start_robot_version_checking_process = false;
+        gn("robot_connection_status").style.backgroundColor = (robot_version == -1) ? "red" : "green";
+        console.log("[src::editor::engine::Runtime.js::rt.robot_version: ] " + rt.robot_version);
      }
 
+     function robot_not_answered(){
+        checked_versions_count++;
+        if ((checked_versions_count >= robot_version_table.length) && (rt.robot_detection == detection)){
+           finish_detection(-1);
+        }
+     }
+
+     robot_version_table.forEach(function(version, gi){
+        rt.check_robot_version(version, gi).then(
+           (response) => {
+              console.log(`[src::editor::engine::Runtime.js::robot_response:] ${response.response_data} gi:${gi}`);
+              if (response.response_data.indexOf("error") != -1){
+                 robot_not_answered();
+              }else if (rt.robot_detection == detection){
+                 rt.robot_detection = undefined;
+                 finish_detection(version);
+              }
+           },
+           robot_not_answered
+        );
+     });
    }
-   else{
-      rt.tickTask()
 
-   }
+   show_robot_not_found(){
+      if (this.robot_not_found_shown){
+         return;
+      }
+      this.robot_not_found_shown = true;
 
-
+      let status = gn("robot_connection_status");
+      Alert.open(gn("frame"), status, Localization.localize("ROBOT_NOT_FOUND"), "#ff0000");
+      setTimeout(function(){
+         if (Alert.balloon && (Alert.balloon.icon == status)){
+            Alert.close();
+         }
+      }, 4000);
    }
 
    tickTask () {
@@ -203,6 +166,7 @@ export default class Runtime {
 
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
+        xhr.timeout = 5000;
 
         xhr.onload = function() {
         if (this.status == 200) {
@@ -219,6 +183,10 @@ export default class Runtime {
 
       xhr.onerror = function() {
       reject(new Error("Network Error"));
+      };
+
+      xhr.ontimeout = function() {
+      reject(new Error("Timeout"));
       };
 
      xhr.send();
@@ -349,13 +317,19 @@ export default class Runtime {
 
         var token = Prims.table[this.thread.thisblock.blocktype];
 
-        var robot_blocks = ['robot_forward','robot_back','robot_left','robot_right'];
+        var robot_blocks = ['robot_forward','robot_back','robot_left','robot_right','robot_stop'];
         //console.log("[engine] token=" + token);
 
-        //this.thread.robot_version = 0;
-        if ((( (this.thread.robot_version == undefined)) || (this.thread.robot_version == -1)) && (robot_blocks.indexOf(this.thread.thisblock.blocktype) >= 0) && (!isTablet)){
-            token = Prims.table.missing;
-          //  alert("Не возможно определить версию робота. Пропускаем блок.");
+        if ((robot_blocks.indexOf(this.thread.thisblock.blocktype) >= 0) && (!isTablet)){
+            if (this.thread.robot_version == undefined){
+                // Detection has not answered yet: this script waits, the others keep running.
+                this.thread.waitTimer = 1;
+                return;
+            }
+            if (this.thread.robot_version == -1){
+                token = Prims.table.missing;
+                this.show_robot_not_found();
+            }
         }
         if (token == null) {
             token = Prims.table.missing;
@@ -417,6 +391,7 @@ export default class Runtime {
 
             this.robot_version = undefined;
             this.start_robot_version_checking_process = false;
+            this.robot_not_found_shown = false;
             this.threadsRunning.push(newThread);
           //  this.get_robot_version_and_tickTask(this);
 

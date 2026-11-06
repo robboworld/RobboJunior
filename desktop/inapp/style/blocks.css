@@ -42,6 +42,10 @@ body {
     background-color: #FFB254;
 }
 
+#robot-block-category-header {
+    background-color: #00a14b;
+}
+
 #red-block-category-header {
     background-color: #EA2424;
 }
@@ -70,6 +74,10 @@ body {
 
 #orange-block-category-header-line {
     background-color: #FFB254;
+}
+
+#robot-block-category-header-line {
+    background-color: #00a14b;
 }
 
 #red-block-category-header-line {

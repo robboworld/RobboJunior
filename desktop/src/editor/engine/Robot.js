@@ -6,9 +6,7 @@ export default class Robot {
   static init(){
 
     Robot.robot = {};
-    Robot.robot.power_left  = 0;
-    Robot.robot.power_right = 0;
-    Robot.robot.moving = false;
+    Robot.robot.drivers = []; // threads running a robot block, the last one drives
 
   }
 
@@ -95,215 +93,90 @@ static robot_send_power_command_desktop(robot_version, left_speed, right_speed){
 
     /*** Robot Block start ***/
    static Robot_forward(strip){
-      if(Robot.robot.moving) return;
-
-      console.log("[engine] robot_forward=" + strip);
-//      Robot.robot.moving = true;
-
-        //    Robot.setTime(strip);
-
-      console.log("[robbo_forward:]" + new Date());
-
-
-      //strip.thisblock.can_execute = false;
-
-     let power_in_percent;
-
-    if (strip.robot_version != 3){
-       power_in_percent = 30; //Мощность в процетах.
-    }else{
-
-         power_in_percent = 100; //Мощность в процетах.
-
-    }
-      let power = Math.round(power_in_percent * 0.63);
-
-      Robot.robot.power_left = power;
-      Robot.robot.power_right = power;
-
-      var execution_time = Number(strip.thisblock.getArgValue()) * 1000 / 5;
-
-      if (execution_time != 0){
-
-      strip.waitTimer = execution_time;
-
-      for(var j = 0; j < execution_time / 200 ; j++){
-         setTimeout(function(){
-          Robot.robot_send_power_command(strip.robot_version, Robot.robot.power_left, Robot.robot.power_right)
-         }, 200 * j);
-      }
-
-      setTimeout(function(){
-         console.log("[engine] nextBlock()");
-         Robot.robot.moving = false;
-         Robot.robot_send_power_command(strip.robot_version, "00", "00")
-         Prims.DoNextBlock(strip);
-      }, execution_time);
-
-    }else{
-
-         Prims.DoNextBlock(strip);
-
-    }
-
-//      Robot.DoNextBlock(strip);
+      Robot.drive(strip, false, false);
    }
-
-
 
    static Robot_back(strip){
-      if(Robot.robot.moving) return;
-      console.log("[engine] robot_back=" + strip);
-//      Robot.robot.moving = true;
-
-      //strip.waitTimer = 10/*Math.round(Number(strip.thisblock.getArgValue()) * 1000 / 32 + 1)*/;
-
-//      strip.thisblock.can_execute = false;
-
- let power_in_percent;
-
-if (strip.robot_version != 3){
-   power_in_percent = 30; //Мощность в процетах.
-}else{
-
-     power_in_percent = 100; //Мощность в процетах.
-
-}
-      let power = Math.round(power_in_percent * 0.63) + 64;
-
-      Robot.robot.power_left = power;
-      Robot.robot.power_right = power;
-
-      var execution_time = Number(strip.thisblock.getArgValue()) * 1000 / 5;
-      strip.waitTimer = execution_time;
-
-      if (execution_time != 0){
-
-      strip.waitTimer = execution_time;
-
-      for(var j = 0; j < execution_time / 200 ; j++){
-         setTimeout(function(){
-          Robot.robot_send_power_command(strip.robot_version, Robot.robot.power_left, Robot.robot.power_right)
-         }, 200 * j);
-      }
-
-      setTimeout(function(){
-         console.log("[engine] nextBlock()");
-         Robot.robot.moving = false;
-         Robot.robot_send_power_command(strip.robot_version, "00", "00")
-         Prims.DoNextBlock(strip);
-      }, execution_time);
-
-    }else{
-
-         Prims.DoNextBlock(strip);
-
-    }
-
-//      Robot.DoNextBlock(strip);
+      Robot.drive(strip, true, true);
    }
 
+   static Robot_left(strip){
+      Robot.drive(strip, true, false);
+   }
 
-static Robot_left(strip){
+   static Robot_right(strip){
+      Robot.drive(strip, false, true);
+   }
 
+   static Robot_stop(strip){
+      Robot.robot.drivers.slice().forEach(function(driver){
+         Robot.finish(driver);
+      });
+      Robot.robot_send_power_command(strip.robot_version, "00", "00");
+      Prims.DoNextBlock(strip);
+   }
 
-      if(Robot.robot.moving) return;
-      console.log("[engine] robot_left=" + strip);
-  //      Robot.robot.moving = true;
-
-      //strip.waitTimer = 10/*Math.round(Number(strip.thisblock.getArgValue()) * 1000 / 32 + 1)*/;
-
-  //      strip.thisblock.can_execute = false;
-
-  let power_in_percent;
-
- if (strip.robot_version != 3){
-    power_in_percent = 30; //Мощность в процетах.
- }else{
-
-      power_in_percent = 100; //Мощность в процетах.
-
- }
+   static drive(strip, reverse_left, reverse_right){
+      let power_in_percent = (strip.robot_version != 3) ? 30 : 100; //Мощность в процетах.
       let power = Math.round(power_in_percent * 0.63);
+      let execution_time = Number(strip.thisblock.getArgValue()) * 1000 / 5;
 
-      Robot.robot.power_left = power + 64;
-      Robot.robot.power_right = power;
-
-      var execution_time = Number(strip.thisblock.getArgValue()) * 1000 / 5;
-
-      if (execution_time != 0){
-
-      strip.waitTimer = execution_time;
-
-      for(var j = 0; j < execution_time / 200 ; j++){
-         setTimeout(function(){
-          Robot.robot_send_power_command(strip.robot_version, Robot.robot.power_left, Robot.robot.power_right)
-         }, 200 * j);
+      if (execution_time == 0){
+         Prims.DoNextBlock(strip);
+         return;
       }
 
-      setTimeout(function(){
-         console.log("[engine] nextBlock()");
-         Robot.robot.moving = false;
-         Robot.robot_send_power_command(strip.robot_version, "00", "00")
-         Prims.DoNextBlock(strip);
+      // Adding 64 reverses a motor. robot_version of a running thread changes when another
+      // script starts, so the command keeps its own.
+      let command = {
+         robot_version: strip.robot_version,
+         power_left: reverse_left ? power + 64 : power,
+         power_right: reverse_right ? power + 64 : power
+      };
+
+      strip.robot_command = command;
+      Robot.robot.drivers.push(strip);
+
+      // The block ends here, not by waitTimer, which counts ticks. Set before the repeat timer
+      // so that no power command follows the stop command.
+      strip.waitTimer = execution_time;
+      command.finish_timer = setTimeout(function(){
+         Robot.finish(strip);
       }, execution_time);
 
-    }else{
+      Robot.send_command(command);
+      command.repeat_timer = setInterval(function(){
+         if (Robot.robot.drivers[Robot.robot.drivers.length - 1] == strip){
+            Robot.send_command(command);
+         }
+      }, 200);
+   }
 
-         Prims.DoNextBlock(strip);
+   static send_command(command){
+      Robot.robot_send_power_command(command.robot_version, command.power_left, command.power_right);
+   }
 
-    }
-}
-    static Robot_right(strip){
+   static finish(strip){
+      Robot.cancel(strip);
+      Prims.DoNextBlock(strip);
+   }
 
-      if(Robot.robot.moving) return;
-      console.log("[engine] robot_right=" + strip);
-  //      Robot.robot.moving = true;
+   // Ends the thread's robot block, if any. Called when a block finishes and when its thread stops.
+   static cancel(strip){
+      let command = strip.robot_command;
 
-      //strip.waitTimer = 10/*Math.round(Number(strip.thisblock.getArgValue()) * 1000 / 32 + 1)*/;
-
-  //      strip.thisblock.can_execute = false;
-
-  let power_in_percent;
-
- if (strip.robot_version != 3){
-    power_in_percent = 30; //Мощность в процетах.
- }else{
-
-      power_in_percent = 100; //Мощность в процетах.
-
- }
-      let power = Math.round(power_in_percent * 0.63);
-
-      Robot.robot.power_left = power;
-      Robot.robot.power_right = power + 64;
-
-      var execution_time = Number(strip.thisblock.getArgValue()) * 1000 / 5;
-      strip.waitTimer = execution_time;
-
-      if (execution_time != 0){
-
-      strip.waitTimer = execution_time;
-
-      for(var j = 0; j < execution_time / 200 ; j++){
-         setTimeout(function(){
-          Robot.robot_send_power_command(strip.robot_version, Robot.robot.power_left, Robot.robot.power_right)
-         }, 200 * j);
+      if (!command){
+         return;
       }
 
-      setTimeout(function(){
-         console.log("[engine] nextBlock()");
-         Robot.robot.moving = false;
-         Robot.robot_send_power_command(strip.robot_version, "00", "00")
-         Prims.DoNextBlock(strip);
-      }, execution_time);
+      strip.robot_command = undefined;
+      clearTimeout(command.finish_timer);
+      clearInterval(command.repeat_timer);
+      Robot.robot.drivers.splice(Robot.robot.drivers.indexOf(strip), 1);
 
-    }else{
-
-         Prims.DoNextBlock(strip);
-
-    }
-
-    }
-
+      if (Robot.robot.drivers.length == 0){
+         Robot.robot_send_power_command(command.robot_version, "00", "00");
+      }
+   }
+    /*** Robot Block end ***/
 }

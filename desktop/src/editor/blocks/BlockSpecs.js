@@ -190,7 +190,7 @@ export default class BlockSpecs {
             ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show'],
             [],
             ['wait', 'stopmine', 'setspeed', 'repeat'],
-            ['robot_forward','robot_back','robot_left','robot_right'],
+            ['robot_forward','robot_back','robot_left','robot_right','robot_stop'],
             ['endstack', 'forever'],
             ];
     }
@@ -295,6 +295,8 @@ export default class BlockSpecs {
                       BlockSpecs.greenCmd, 'n', 1, BlockSpecs.greenCmdH, 1, null, BlockSpecs.cmdS],
                 'robot_right':['robot_right', BlockSpecs.getImageFrom('assets/blockicons/Robot_Right', 'svg'),
                             BlockSpecs.greenCmd, 'n', 1, BlockSpecs.greenCmdH, 1, null, BlockSpecs.cmdS],
+                'robot_stop':['robot_stop', BlockSpecs.getImageFrom('assets/blockicons/Robot_Stop', 'svg'),
+                      BlockSpecs.greenCmd, null, null, BlockSpecs.greenCmdH, null, null, BlockSpecs.cmdS],
 
             //Robot section end
         };
@@ -343,6 +345,11 @@ export default class BlockSpecs {
                 CHARACTER_NAME: spr.name ? spr.name : ''
             }),
             'forever': Localization.localize('BLOCK_DESC_REPEAT_FOREVER'),
+            'robot_forward': Localization.localize('BLOCK_DESC_ROBOT_TURN_FORWARD'),
+            'robot_back': Localization.localize('BLOCK_DESC_ROBOT_TURN_BACKWARD'),
+            'robot_left': Localization.localize('BLOCK_DESC_ROBOT_TURN_LEFT'),
+            'robot_right': Localization.localize('BLOCK_DESC_ROBOT_TURN_RIGHT'),
+            'robot_stop': Localization.localize('BLOCK_DESC_ROBOT_STOP'),
             'gotopage': Localization.localize('BLOCK_DESC_GO_TO_PAGE', {
                 PAGE: str
             }),
