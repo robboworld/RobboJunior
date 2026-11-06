@@ -9,7 +9,7 @@
 #   --dry-run     только проверить окружение и показать план
 #
 # Версия — из CHANGELOG.md. Результаты: packaging/linux/output/, packaging/windows/output/.
-# Логи: .build-logs/release-<время>/. Выкладки на сервер пока нет.
+# Логи: .build-logs/release-<время>/. Выкладка на зеркала — scripts/deploy.sh.
 
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"

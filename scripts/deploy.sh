@@ -5,6 +5,7 @@
 #
 # Настройки: config/deploy.conf (ru) и config/deploy.world.conf (world), шаблоны — *.conf.example.
 # Пакеты собирает scripts/release.sh. Текущая версия на сервере не трогается.
+# Последним загружается latest.json: по нему программа предлагает обновиться.
 
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -39,6 +40,14 @@ for f in "${FILES[@]}"; do
     [ -f "$f" ] || die "нет файла $f (сначала scripts/release.sh)"
 done
 
+# latest.txt — тот же файл: не все веб-серверы отдают .json
+DATE=$(sed -nE "s/^## \[$VERSION\] - (.*)\$/\1/p" "$RJ_ROOT/CHANGELOG.md" | head -1)
+[ -n "$DATE" ] || die "в CHANGELOG.md нет даты версии $VERSION"
+LATEST_DIR=$(mktemp -d)
+trap 'rm -rf "$LATEST_DIR"' EXIT
+python3 "$RJ_ROOT/scripts/lib/latest-json.py" alpha "$VERSION" "$DATE" "$LATEST_DIR/latest.json" "${FILES[@]:0:3}"
+cp "$LATEST_DIR/latest.json" "$LATEST_DIR/latest.txt"
+
 urlencode() {
     python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
 }
@@ -61,6 +70,7 @@ deploy_target() {
     for f in "${FILES[@]}"; do
         echo "  $(basename "$f")  $(du -h "$f" | cut -f1)"
     done
+    echo "  latest.json, latest.txt"
     [ "$DRY_RUN" -eq 0 ] || return 0
 
     [ -f "$conf" ] || die "нет $conf (шаблон — $conf.example)"
@@ -75,11 +85,7 @@ deploy_target() {
     : "${DEPLOY_PASS:?нет DEPLOY_PASS в $conf}"
     local proto="${DEPLOY_TRANSPORT:-ftp}"
 
-    local script
-    script=$(mktemp)
-    chmod 600 "$script"
-    trap 'rm -f "$script"' RETURN
-    {
+    connect_commands() {
         echo "set net:timeout $LFTP_NET_TIMEOUT"
         echo "set net:max-retries $LFTP_MAX_RETRIES"
         echo "set cmd:fail-exit yes"
@@ -96,6 +102,18 @@ deploy_target() {
             echo "set ftp:ssl-allow no"
         fi
         echo "open $proto://$(urlencode "$DEPLOY_USER"):$(urlencode "$DEPLOY_PASS")@$DEPLOY_HOST${DEPLOY_PORT:+:$DEPLOY_PORT}"
+    }
+
+    run_lftp() {
+        # lftp печатает адрес с паролем в ошибках — маскируем
+        lftp -f "$script" 2>&1 | sed -u -E 's#(://[^:/@]*):[^/]*@#\1:***@#g'
+        [ "${PIPESTATUS[0]}" -eq 0 ] || die "$target: выкладка не удалась"
+    }
+
+    local script
+    script=$(mktemp -p "$LATEST_DIR")  # там же временный файл с паролем: удалится при любом выходе
+    {
+        connect_commands
         echo "mkdir -p -f $remote"
         echo "cd $remote"
         for f in "${FILES[@]}"; do
@@ -103,9 +121,7 @@ deploy_target() {
         done
     } >"$script"
 
-    # lftp печатает адрес с паролем в ошибках — маскируем
-    lftp -f "$script" 2>&1 | sed -u -E 's#(://[^:/@]*):[^/]*@#\1:***@#g'
-    [ "${PIPESTATUS[0]}" -eq 0 ] || die "$target: выкладка не удалась"
+    run_lftp
 
     # Сверка по HTTP: файл доступен и размер совпадает
     local name size got
@@ -116,6 +132,19 @@ deploy_target() {
         [ "$got" = "$size" ] || die "$target: $name на сервере ${got:-нет ответа}, локально $size байт"
         echo "  проверено: $url$(urlencode "$name")"
     done
+
+    # После сверки: программа не должна предлагать версию, пока пакеты не на месте
+    {
+        connect_commands
+        echo "cd $remote"
+        echo "put -e \"$LATEST_DIR/latest.json\" -o latest.json"
+        echo "put -e \"$LATEST_DIR/latest.txt\" -o latest.txt"
+    } >"$script"
+    run_lftp
+    size=$(wc -c <"$LATEST_DIR/latest.txt")
+    got=$(curl -sSI -m 30 "${url}latest.txt" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
+    [ "$got" = "$size" ] || die "$target: latest.txt на сервере ${got:-нет ответа}, локально $size байт"
+    echo "  проверено: ${url}latest.txt"
 }
 
 for t in "${TARGETS[@]}"; do
