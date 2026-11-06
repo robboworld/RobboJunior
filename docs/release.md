@@ -7,7 +7,7 @@
    - `X.Y.Z-N` — пересборка пакета той же версии.
 2. Написать сообщение для пользователей: `release-notes/<версия>.ru.md` и `.en.md`, формат в [release-notes/README.md](../release-notes/README.md).
 3. На Linux: `scripts/release.sh` (сначала можно `scripts/release.sh --dry-run`).
-4. Проверить пакеты (ниже) и закоммитить изменения версии (`scripts/sync-version.sh` правит `desktop/package.json`, `desktop/home.html`, `desktop/version`, deb `control`, rpm spec, `.nsi`).
+4. Запустить `tests/run.sh` (нужен `xvfb`) и проверить пакеты (ниже) и закоммитить изменения версии (`scripts/sync-version.sh` правит `desktop/package.json`, `desktop/home.html`, `desktop/version`, deb `control`, rpm spec, `.nsi`).
 
 Результаты:
 

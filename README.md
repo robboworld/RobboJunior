@@ -15,6 +15,7 @@
 | `packaging/common/icons/` | да | Иконки |
 | `packaging/linux/` | да | `build_deb.sh`, `build_rpm.sh`, шаблоны пакетов, общие файлы (`files/`) |
 | `packaging/windows/` | да | `build_windows.sh`, `RobboJunior.nsi` |
+| `tests/` | да | Проверки: `tests/run.sh`, см. [tests/README.md](tests/README.md) |
 | `scripts/` | да | `build.sh`, `release.sh`, `fetch-runtime.sh`, `stage-app.sh`, `sync-version.sh` |
 | `CHANGELOG.md` | да | **Единственный источник версии** |
 | `runtime/` | нет | Electron и Java 8 — скачивает `scripts/fetch-runtime.sh` с проверкой sha256 |
