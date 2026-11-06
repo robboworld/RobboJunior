@@ -1,0 +1,7 @@
+# Выкладка на files.robbo.ru (SFTP). Скопируйте в config/deploy.conf и заполните.
+# config/*.conf не попадает в git: не коммитьте пароли.
+DEPLOY_TRANSPORT="sftp"
+DEPLOY_HOST=""
+DEPLOY_PORT="22"
+DEPLOY_USER=""
+DEPLOY_PASS=""
