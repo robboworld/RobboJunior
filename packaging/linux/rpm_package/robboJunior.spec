@@ -1,6 +1,6 @@
 %define name robboJunior
 %define version 1.0.0
-%define release alpha
+%define release 1
 
 # Шаблон: build_rpm.sh подставляет версию, тексты скриптов после установки/удаления
 # (из packaging/linux/files) и список встроенных библиотек, а готовое дерево
