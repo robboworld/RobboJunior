@@ -396,5 +396,6 @@
   "INTERFACE_GUIDE_ROBOT": "{N, number} | Robot indicator",
   "INTERFACE_GUIDE_ROBOT_DESCRIPTION": "Green: the robot is connected. Red: the robot was not found.",
   "PAINT_GUIDE_CANCEL": "{N, number} | Cancel",
-  "PAINT_GUIDE_CANCEL_DESCRIPTION": "Closes the editor without saving the changes."
+  "PAINT_GUIDE_CANCEL_DESCRIPTION": "Closes the editor without saving the changes.",
+  "STORAGE_PATH": "Projects folder:"
 }

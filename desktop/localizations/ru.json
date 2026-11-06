@@ -452,5 +452,6 @@
   "INTERFACE_GUIDE_ROBOT_DESCRIPTION": "Зелёный: робот подключён. Красный: робот не найден.",
   "INTERFACE_GUIDE_SAVE": "{N, number} | Сохранение",
   "PAINT_GUIDE_CANCEL": "{N, number} | Отмена",
-  "PAINT_GUIDE_CANCEL_DESCRIPTION": "Закрывает редактор без сохранения изменений."
+  "PAINT_GUIDE_CANCEL_DESCRIPTION": "Закрывает редактор без сохранения изменений.",
+  "STORAGE_PATH": "Папка проектов:"
 }
