@@ -50,6 +50,10 @@ BrandingText "${PRODUCT_NAME} ${VERSION}"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+; Галочка на последней странице, включена по умолчанию
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_TEXT "$(RUN_AFTER_INSTALL)"
+!define MUI_FINISHPAGE_RUN_FUNCTION RunApp
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -64,8 +68,8 @@ LangString SEC_ROBBO_DESC ${LANG_RUSSIAN} "Драйвер FTDI для Робоп
 LangString SEC_ROBBO_DESC ${LANG_ENGLISH} "FTDI driver for Robot platform and Laboratory"
 LangString SEC_ARDUINO_DESC ${LANG_RUSSIAN} "Драйверы Scratchduino/Arduino"
 LangString SEC_ARDUINO_DESC ${LANG_ENGLISH} "Scratchduino/Arduino drivers"
-LangString SEC_CH340_DESC ${LANG_RUSSIAN} "Драйвер USB-UART CH340"
-LangString SEC_CH340_DESC ${LANG_ENGLISH} "CH340 USB-to-serial driver"
+LangString RUN_AFTER_INSTALL ${LANG_RUSSIAN} "Запустить Robbo Junior"
+LangString RUN_AFTER_INSTALL ${LANG_ENGLISH} "Run Robbo Junior"
 LangString SEC_SHORTCUTS_DESC ${LANG_RUSSIAN} "Ярлыки в меню «Пуск» и на рабочем столе"
 LangString SEC_SHORTCUTS_DESC ${LANG_ENGLISH} "Start Menu and Desktop shortcuts"
 LangString SEC_DRIVERS ${LANG_RUSSIAN} "Драйверы"
@@ -106,6 +110,12 @@ Function ExecDriver
   Pop $0
 FunctionEnd
 
+; Установщик работает от администратора: прямой запуск дал бы программе те же права
+; и чужой профиль. explorer.exe открывает ярлык с правами обычного пользователя.
+Function RunApp
+  Exec '"$WINDIR\explorer.exe" "$INSTDIR\robbojunior.lnk"'
+FunctionEnd
+
 Function .onInstSuccess
   ${If} $DriverFailed == "1"
     MessageBox MB_ICONEXCLAMATION|MB_OK "$(DRIVER_WARN)"
@@ -143,7 +153,7 @@ Section "!${PRODUCT_NAME}" SecMain
   ${EndIf}
 
   SetOutPath "$INSTDIR\drivers"
-  File /r "${DRIVERS_DIR}\*.*"
+  File /r /x CH340SER.EXE "${DRIVERS_DIR}\*.*"
 
   ; Панель слушает 0.0.0.0:9876/9877. Локальным подключениям firewall не мешает,
   ; а снаружи управлять роботом незачем: запрещаем входящие — и Windows не спрашивает про доступ.
@@ -166,6 +176,10 @@ Section "!${PRODUCT_NAME}" SecMain
   WriteRegDWORD HKLM "${UNINST_KEY}" "NoModify" 1
   WriteRegDWORD HKLM "${UNINST_KEY}" "NoRepair" 1
   WriteUninstaller "$INSTDIR\uninstall.exe"
+
+  ; Для запуска после установки: ярлыки в меню необязательны, а этот есть всегда
+  SetOutPath "$INSTDIR"
+  CreateShortcut "$INSTDIR\robbojunior.lnk" "${PANEL_EXE}" '${PANEL_ARGS}' "$INSTDIR\robbojunior.ico"
 SectionEnd
 
 SectionGroup "$(SEC_DRIVERS)" SecDrivers
@@ -173,12 +187,9 @@ SectionGroup "$(SEC_DRIVERS)" SecDrivers
     Push '"$INSTDIR\drivers\install_ftdi_cdm.cmd"'
     Call ExecDriver
   SectionEnd
-  Section "Scratchduino/Arduino" SecArduinoDrivers
+  ; Только для старых роботов Scratchduino — по умолчанию выключено
+  Section /o "Scratchduino/Arduino" SecArduinoDrivers
     Push '"$INSTDIR\drivers\scratchduino_drivers\install_arduino_drivers.cmd"'
-    Call ExecDriver
-  SectionEnd
-  Section "CH340" SecCH340Drivers
-    Push '"$INSTDIR\drivers\CH340SER.EXE" /S'
     Call ExecDriver
   SectionEnd
 SectionGroupEnd
@@ -197,7 +208,6 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "$(SEC_MAIN_DESC)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecRobboDrivers} "$(SEC_ROBBO_DESC)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecArduinoDrivers} "$(SEC_ARDUINO_DESC)"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecCH340Drivers} "$(SEC_CH340_DESC)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecShortcuts} "$(SEC_SHORTCUTS_DESC)"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -219,6 +229,7 @@ Section "Uninstall"
   Delete "$INSTDIR\i18n.*"
   Delete "$INSTDIR\runtime-version.txt"
   Delete "$INSTDIR\robbojunior.ico"
+  Delete "$INSTDIR\robbojunior.lnk"
   Delete "$INSTDIR\uninstall.exe"
   RMDir "$INSTDIR"
 
