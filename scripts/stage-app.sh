@@ -22,6 +22,7 @@ DEST="${2:-}"
 
 check_runtime "$OS"
 require_min_size "$RJ_DESKTOP/app.bundle.js" 1000000
+[ -f "$RJ_DESKTOP/whats-new.json" ] || die "нет desktop/whats-new.json (сначала scripts/build.sh)"
 grep -q '^const node_fs = require("fs");' "$RJ_DESKTOP/app.bundle.js" || die "desktop/app.bundle.js собран не через scripts/build.sh"
 
 RT="$RJ_RUNTIME/$OS"
