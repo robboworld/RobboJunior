@@ -392,5 +392,7 @@
   "BLOCKS_ROBOT_RIGHT": "Robot Right",
   "BLOCKS_ROBOT_RIGHT_DESCRIPTION": "The robot turns right on the spot. The number sets the time: 1 is 0.2 seconds.",
   "BLOCKS_ROBOT_STOP": "Robot Stop",
-  "BLOCKS_ROBOT_STOP_DESCRIPTION": "The robot stops at once."
+  "BLOCKS_ROBOT_STOP_DESCRIPTION": "The robot stops at once.",
+  "WHATS_NEW": "What's new",
+  "WHATS_NEW_OK": "Got it"
 }

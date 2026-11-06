@@ -40,7 +40,7 @@
 Сборка GUI — любая ОС с Node 20 (`.nvmrc`). Пакеты — **только Linux** (как у Robbo Scratch):
 
 ```bash
-sudo apt install curl unzip fakeroot dpkg-dev rpm nsis
+sudo apt install curl unzip python3 fakeroot dpkg-dev rpm nsis
 ```
 
 Node: [nvm](https://github.com/nvm-sh/nvm), затем `nvm install` в корне репозитория.

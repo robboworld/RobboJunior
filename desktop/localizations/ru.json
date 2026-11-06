@@ -448,5 +448,7 @@
   "BLOCKS_ROBOT_RIGHT": "Робот вправо",
   "BLOCKS_ROBOT_RIGHT_DESCRIPTION": "Робот поворачивает вправо на месте. Число в блоке задаёт время: 1 — это 0,2 секунды.",
   "BLOCKS_ROBOT_STOP": "Стоп робота",
-  "BLOCKS_ROBOT_STOP_DESCRIPTION": "Робот сразу останавливается."
+  "BLOCKS_ROBOT_STOP_DESCRIPTION": "Робот сразу останавливается.",
+  "WHATS_NEW": "Что нового",
+  "WHATS_NEW_OK": "Понятно"
 }

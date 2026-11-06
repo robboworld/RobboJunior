@@ -8,6 +8,7 @@
 
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/version.sh"
 
 CLEAN=0
 for arg in "$@"; do
@@ -24,12 +25,15 @@ if [ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]; then
     (cd "$RJ_ROOT" && nvm use >/dev/null) || die "nvm не смог переключиться на Node $(cat "$RJ_ROOT/.nvmrc"). Выполните: nvm install"
 fi
 
-require_cmd node npm
+require_cmd node npm python3
 NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
 WANT_MAJOR=$(tr -d '[:space:]' <"$RJ_ROOT/.nvmrc")
 [ "$NODE_MAJOR" = "$WANT_MAJOR" ] || die "нужен Node $WANT_MAJOR (сейчас $(node -v)). Установите nvm и выполните 'nvm install' в корне репозитория."
 
 "$RJ_ROOT/scripts/sync-version.sh"
+
+info "Собираю «Что нового» (release-notes/)"
+python3 "$RJ_ROOT/scripts/lib/whats_new.py" "$(rj_version)" "$RJ_DESKTOP/whats-new.json"
 
 cd "$RJ_DESKTOP"
 

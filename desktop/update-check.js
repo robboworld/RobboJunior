@@ -24,6 +24,7 @@ const CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000
 const START_DELAY_MS = 5000
 const REQUEST_TIMEOUT_MS = 15000
 const MAX_REDIRECTS = 3
+const MAX_NOTE_LINES = 6
 
 const TEXTS = {
   ru: {
@@ -132,7 +133,7 @@ function fetchChannel (channel, kind, agent, mirrors) {
   ).then(data => {
     if (typeof data.downloads[kind] !== 'string') return null
     const links = downloadLinks(data.downloads[kind], file, mirrors)
-    return links.length ? {channel, version: data.version, links} : null
+    return links.length ? {channel, version: data.version, links, notes: data.notes} : null
   }).catch(() => null)
 }
 
@@ -170,12 +171,21 @@ function writeState (state) {
   }
 }
 
+// The first items of the release message, the same text as in the What's new window
+function noteLines (notes, language) {
+  const note = notes && notes[language === 'ru' ? 'ru' : 'en']
+  if (!note || !note.sections) return ''
+  const items = [].concat(note.sections.added || [], note.sections.changed || [], note.sections.fixed || [])
+  return items.slice(0, MAX_NOTE_LINES).map(item => `\n• ${item.title}`).join('')
+}
+
 function ask (window, offer, agent) {
-  const texts = TEXTS[app.getLocale().split('-')[0]] || TEXTS.en
+  const language = app.getLocale().split('-')[0]
+  const texts = TEXTS[language] || TEXTS.en
   return dialog.showMessageBox(window, {
     type: 'info',
     message: texts.message,
-    detail: texts.detail(offer.version),
+    detail: texts.detail(offer.version) + noteLines(offer.notes, language),
     buttons: [texts.download, texts.later],
     defaultId: 0,
     cancelId: 1

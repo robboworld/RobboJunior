@@ -5,6 +5,9 @@ node_modules/
 /desktop/src/build/
 /desktop/app.bundle.js
 /desktop/app.bundle.js.map
+/desktop/whats-new.json
+
+__pycache__/
 
 # Runtime (Electron, Java 8) — скачивается scripts/fetch-runtime.sh
 /runtime/
