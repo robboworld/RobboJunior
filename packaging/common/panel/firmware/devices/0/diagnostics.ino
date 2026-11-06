@@ -60,21 +60,27 @@ void parseSerialNumber(){
 
     if(strcmp(chararrModel, "R") == 0
        && strcmp(chararrVersion, "1") == 0
-       && (strcmp(chararrPart, "1") == 0 || strcmp(chararrPart, "2") == 0 || strcmp(chararrPart, "3") == 0 || strcmp(chararrPart, "4") == 0)){
+       /* && (strcmp(chararrPart, "1") == 0 || strcmp(chararrPart, "2") == 0 || strcmp(chararrPart, "3") == 0 || strcmp(chararrPart, "4") == 0 || strcmp(chararrPart, "5") == 0) */ ){
 
        MODEL_ID=0;
     }
     else if(strcmp(chararrModel, "L") == 0
        && strcmp(chararrVersion, "1") == 0
-       && strcmp(chararrPart, "1") == 0){
+       /* && strcmp(chararrPart, "1") == 0 */ ){
 
        MODEL_ID=1;
     }
     else if(strcmp(chararrModel, "L") == 0
        && strcmp(chararrVersion, "3") == 0
-       && (strcmp(chararrPart, "1") == 0 || strcmp(chararrPart, "2") == 0 || strcmp(chararrPart, "3") == 0)){
+       /* && (strcmp(chararrPart, "1") == 0 || strcmp(chararrPart, "2") == 0 || strcmp(chararrPart, "3") == 0) */){
 
        MODEL_ID=2;
+    }
+     else if(strcmp(chararrModel, "O") == 0              // O= Otto
+         && strcmp(chararrVersion, "1") == 0           // s zavoda
+        /*&& (strcmp(chararrPart, "5") == 0 )*/){          // s zavoda
+
+       MODEL_ID=5;                                     //MODEL_ID for OTTO
     }
     else{
        MODEL_ID=9999;
