@@ -332,7 +332,7 @@ export default class Project {
             Project.recreatePage(pages[i], data[pages[i]]);
         }
 
-        ScratchAudio.copyRecordedSounds(data.sounds); //modified_by_Yaroslav
+        ScratchAudio.copyRecordedSounds(data.sounds || []); // projects made before recorded sounds have no list
 
         mediaCountBase = mediaCount;
     }
