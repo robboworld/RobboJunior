@@ -13,14 +13,14 @@ const problems = []
 
 const keys = Object.keys(en).filter(key => !LIBRARY_KEY.test(key))
 for (const locale of Object.values(load('settings.json').supportedLocales)) {
-  const messages = load(`localizations/${locale.split('-')[0]}.json`)
+  const messages = load(`localizations/${/^(zh|pt)/.test(locale) ? locale : locale.split('-')[0]}.json`)
   const missing = keys.filter(key => !(key in messages))
   if (missing.length) problems.push(`${locale}: нет ${missing.slice(0, 5).join(', ')}`)
 }
 
 // The program is called Robbo Junior everywhere; only the page about its origin names ScratchJr
 for (const locale of Object.values(load('settings.json').supportedLocales)) {
-  const messages = load(`localizations/${locale.split('-')[0]}.json`)
+  const messages = load(`localizations/${/^(zh|pt)/.test(locale) ? locale : locale.split('-')[0]}.json`)
   const old = Object.keys(messages).filter(key => key !== 'ABOUT_BASED_ON_DESCRIPTION' && /ScratchJr/.test(messages[key]))
   if (old.length) problems.push(`${locale}: ScratchJr в ${old.slice(0, 5).join(', ')}`)
 }

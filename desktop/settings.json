@@ -21,14 +21,29 @@
     "defaultLocale": "ru",
     "defaultLocaleShort": "ru",
     "supportedLocales": {
-        "Català": "ca",
+        "Русский": "ru",
         "English": "en",
+        "Català": "ca",
+        "Cymraeg": "cy",
+        "Dansk": "da",
+        "Deutsch": "de",
+        "Ελληνικά": "el",
         "Español": "es",
         "Français": "fr",
         "Italiano": "it",
         "Nederlands": "nl",
+        "Norsk": "no",
+        "Polski": "pl",
+        "Português": "pt",
+        "Português BR": "pt-br",
+        "Svenska": "sv",
+        "Türkçe": "tr",
+        "Українська": "uk",
         "ไทย": "th",
-        "Russian": "ru"
+        "にほんご": "ja",
+        "한국어": "ko",
+        "简体中文": "zh-cn",
+        "繁體中文": "zh-tw"
     },
     "settingsPageDisabled": false
 }

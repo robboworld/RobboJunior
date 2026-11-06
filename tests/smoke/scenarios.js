@@ -168,6 +168,36 @@ module.exports = [
     console.log(`       открыто проектов: ${ids.length}`)
   }],
 
+  ['число в блоке вводится с клавиатуры', async t => {
+    await t.open('home.html')
+    await homeLoaded(t)
+    await newProjectWithBlock(t)
+    const value = `(${scriptBlock('robot_forward')}).owner.getArgValue()`
+    await t.ev(`(${scriptBlock('robot_forward')}).owner.arg.div.dispatchEvent(new MouseEvent('mousedown', {bubbles: true})); 1`)
+    await t.sleep(200)
+    await t.ev(`(${scriptBlock('robot_forward')}).owner.arg.div.dispatchEvent(new MouseEvent('mouseup', {bubbles: true})); 1`)
+    await t.sleep(300)
+    t.wc.sendInputEvent({type: 'keyDown', keyCode: '7'})
+    t.wc.sendInputEvent({type: 'char', keyCode: '7'})
+    t.wc.sendInputEvent({type: 'keyUp', keyCode: '7'})
+    await t.until('значение 7', async () => String(await t.ev(value)).includes('7'), 3000)
+  }],
+
+  ['язык: региональный вариант включается в настройках', async t => {
+    const choose = async name => {
+      await t.open('home.html?place=gear')
+      await t.until('список языков', () => t.ev(`document.querySelectorAll('.localizationselect').length >= 23`))
+      await t.click(`[...document.querySelectorAll('.localizationselect')].find(e => e.textContent == '${name}')`)
+      await t.sleep(800)
+      await t.open('home.html')
+      await homeLoaded(t)
+    }
+    await choose('简体中文')
+    await t.until('китайский', async () => (await t.ev(`document.getElementById('tabheader').textContent`)) === '我的项目')
+    await choose('Русский')
+    await t.until('русский', async () => /Мои проекты/.test(await t.ev(`document.getElementById('tabheader').textContent`)))
+  }],
+
   // The samples screen is hidden and is not tested: samples/Friends.txt, the only one in media.json,
   // needs sprites and backgrounds that are no longer in svglibrary/.
   ['справка: кнопка на главном экране и все вкладки', async t => {
