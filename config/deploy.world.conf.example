@@ -1,0 +1,9 @@
+# Выкладка на files.robbo.world (FTP). Скопируйте в config/deploy.world.conf и заполните.
+# config/*.conf не попадает в git: не коммитьте пароли.
+DEPLOY_TRANSPORT="ftp"
+DEPLOY_HOST=""
+DEPLOY_PORT="21"
+DEPLOY_USER=""
+DEPLOY_PASS=""
+DEPLOY_FTP_SSL=1
+DEPLOY_FTP_SSL_VERIFY=0
