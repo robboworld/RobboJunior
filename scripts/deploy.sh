@@ -1,11 +1,13 @@
 #!/bin/bash
-# Выкладка готовых пакетов Robbo Junior на зеркала (канал alpha).
+# Выкладка готовых пакетов Robbo Junior на зеркала. Канал — по версии: X.Y.Z-alpha, -beta, -rc.1 идут
+# в alpha/, X.Y.Z и X.Y.Z-N в release/.
 #
 #   scripts/deploy.sh [--target ru|world|all] [--dry-run]
 #
 # Настройки: config/deploy.conf (ru) и config/deploy.world.conf (world), шаблоны — *.conf.example.
 # Пакеты собирает scripts/release.sh. Текущая версия на сервере не трогается.
-# Последним загружается latest.json: по нему программа предлагает обновиться.
+# Последним загружается latest.json канала: по нему программа предлагает обновиться.
+# release: RobboJunior/latest.json, пакеты в release/; alpha: всё в alpha/.
 
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -30,6 +32,10 @@ esac
 require_cmd lftp curl python3
 
 VERSION=$(rj_version)
+case "$(rj_version_suffix "$VERSION")" in
+    "" | [0-9]*) CHANNEL=release; PACKAGES_DIR=release; LATEST_REMOTE="" ;;
+    *) CHANNEL=alpha; PACKAGES_DIR=alpha; LATEST_REMOTE=alpha/ ;;
+esac
 FILES=(
     "$RJ_PACKAGING/linux/output/${RJ_PACKAGE_NAME}_$(rj_deb_version "$VERSION")_amd64.deb"
     "$RJ_PACKAGING/linux/output/$RJ_PACKAGE_NAME-$(rj_rpm_version "$VERSION")-$(rj_rpm_release "$VERSION").x86_64.rpm"
@@ -45,7 +51,7 @@ DATE=$(sed -nE "s/^## \[$VERSION\] - (.*)\$/\1/p" "$RJ_ROOT/CHANGELOG.md" | head
 [ -n "$DATE" ] || die "в CHANGELOG.md нет даты версии $VERSION"
 LATEST_DIR=$(mktemp -d)
 trap 'rm -rf "$LATEST_DIR"' EXIT
-python3 "$RJ_ROOT/scripts/lib/latest-json.py" alpha "$VERSION" "$DATE" "$LATEST_DIR/latest.json" "${FILES[@]:0:3}"
+python3 "$RJ_ROOT/scripts/lib/latest-json.py" "$CHANNEL" "$VERSION" "$DATE" "$LATEST_DIR/latest.json" "${FILES[@]:0:3}"
 cp "$LATEST_DIR/latest.json" "$LATEST_DIR/latest.txt"
 
 urlencode() {
@@ -57,20 +63,20 @@ deploy_target() {
     case "$target" in
         ru)
             conf="$RJ_ROOT/config/deploy.conf"
-            remote="/home/ftp/scratchduino/ftp/Software/RobboJunior/alpha"
-            url="http://files.robbo.ru/Software/RobboJunior/alpha/"
+            remote="/home/ftp/scratchduino/ftp/Software/RobboJunior/"
+            url="http://files.robbo.ru/Software/RobboJunior/"
             ;;
         world)
             conf="$RJ_ROOT/config/deploy.world.conf"
-            remote="/files.robbo.world/public_html/Software/RobboJunior/alpha"
-            url="http://files.robbo.world/Software/RobboJunior/alpha/"
+            remote="/files.robbo.world/public_html/Software/RobboJunior/"
+            url="http://files.robbo.world/Software/RobboJunior/"
             ;;
     esac
-    info "$target: $remote"
+    info "$target: $remote$PACKAGES_DIR ($CHANNEL)"
     for f in "${FILES[@]}"; do
         echo "  $(basename "$f")  $(du -h "$f" | cut -f1)"
     done
-    echo "  latest.json, latest.txt"
+    echo "  ${LATEST_REMOTE}latest.json, ${LATEST_REMOTE}latest.txt"
     [ "$DRY_RUN" -eq 0 ] || return 0
 
     [ -f "$conf" ] || die "нет $conf (шаблон — $conf.example)"
@@ -114,8 +120,8 @@ deploy_target() {
     script=$(mktemp -p "$LATEST_DIR")  # там же временный файл с паролем: удалится при любом выходе
     {
         connect_commands
-        echo "mkdir -p -f $remote"
-        echo "cd $remote"
+        echo "mkdir -p -f $remote$PACKAGES_DIR"
+        echo "cd $remote$PACKAGES_DIR"
         for f in "${FILES[@]}"; do
             echo "put -e \"$f\" -o \"$(basename "$f")\""
         done
@@ -128,23 +134,23 @@ deploy_target() {
     for f in "${FILES[@]}"; do
         name=$(basename "$f")
         size=$(wc -c <"$f")
-        got=$(curl -sSI -m 30 "$url$(urlencode "$name")" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
+        got=$(curl -sSI -m 30 "$url$PACKAGES_DIR/$(urlencode "$name")" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
         [ "$got" = "$size" ] || die "$target: $name на сервере ${got:-нет ответа}, локально $size байт"
-        echo "  проверено: $url$(urlencode "$name")"
+        echo "  проверено: $url$PACKAGES_DIR/$(urlencode "$name")"
     done
 
     # После сверки: программа не должна предлагать версию, пока пакеты не на месте
     {
         connect_commands
-        echo "cd $remote"
+        echo "cd $remote$LATEST_REMOTE"
         echo "put -e \"$LATEST_DIR/latest.json\" -o latest.json"
         echo "put -e \"$LATEST_DIR/latest.txt\" -o latest.txt"
     } >"$script"
     run_lftp
     size=$(wc -c <"$LATEST_DIR/latest.txt")
-    got=$(curl -sSI -m 30 "${url}latest.txt" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
+    got=$(curl -sSI -m 30 "$url${LATEST_REMOTE}latest.txt" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
     [ "$got" = "$size" ] || die "$target: latest.txt на сервере ${got:-нет ответа}, локально $size байт"
-    echo "  проверено: ${url}latest.txt"
+    echo "  проверено: $url${LATEST_REMOTE}latest.txt"
 }
 
 for t in "${TARGETS[@]}"; do
