@@ -207,7 +207,7 @@ div.frame {
 }
 
 #topbar ul.reference .book .book-icon {
-    display: none; /*display: block*/
+    display: block;
     width: ${css_vh(12.63)};
     height: ${css_vh(10.03)};
     background: url('../assets/lobby/bookOff.svg');
