@@ -12,9 +12,9 @@ import Project from '../ui/Project';
 import Thumbs from '../ui/Thumbs';
 import UI from '../ui/UI';
 import BlockSpecs from '../blocks/BlockSpecs';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
-import MediaLib from '../../iPad/MediaLib';
+import OS from '../../tablet/OS';
+import IO from '../../tablet/IO';
+import MediaLib from '../../tablet/MediaLib';
 import Undo from '../ui/Undo';
 import ScriptsPane from '../ui/ScriptsPane';
 import SVG2Canvas from '../../utils/SVG2Canvas';
@@ -79,9 +79,9 @@ export default class Sprite {
     getAsset (whenDone) {
         var md5 = this.md5;
         var spr = this;
-        var url = ((MediaLib.keys[md5]) && (md5.indexOf('_custom') < 0) ) ? MediaLib.path + md5 : (md5.indexOf('/') < 0) ? iOS.path + md5 : md5;  //modified_by_Yaroslav
+        var url = ((MediaLib.keys[md5]) && (md5.indexOf('_custom') < 0) ) ? MediaLib.path + md5 : (md5.indexOf('/') < 0) ? OS.path + md5 : md5;  //modified_by_Yaroslav
         md5 = ((MediaLib.keys[md5]) && (md5.indexOf('_custom') < 0)) ? MediaLib.path + md5 : md5;
-        if ((md5.indexOf('/') > -1) && (md5.indexOf(iOS.storagePath) < 0)) {
+        if ((md5.indexOf('/') > -1) && (md5.indexOf(OS.storagePath) < 0)) {
             IO.requestFromServer(md5, doNext);
         } else {
             if (md5.indexOf('_custom') != -1) {
@@ -89,7 +89,7 @@ export default class Sprite {
                 md5 = md5.replace("_custom", "");
 
             }
-            iOS.getmedia(md5, nextStep);
+            OS.getmedia(md5, nextStep);
         }
         function nextStep (base64) {
             doNext(atob(base64));
@@ -97,7 +97,7 @@ export default class Sprite {
         function doNext (str) {
             str = str.replace(/>\s*</g, '><');
             spr.setSVG(str);
-            if ( (str.indexOf('xlink:href') < 0) &&  (url.indexOf(iOS.storagePath) < 0) /*&& iOS.path !== iOS.storagePath*/ ) {
+            if ( (str.indexOf('xlink:href') < 0) &&  (url.indexOf(OS.storagePath) < 0) /*&& OS.path !== OS.storagePath*/ ) {
                 whenDone(url); // does not have embedded images
             } else {
                 var base64 = IO.getImageDataURL(spr.md5, btoa(str));

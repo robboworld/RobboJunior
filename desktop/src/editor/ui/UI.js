@@ -13,9 +13,9 @@ import Stage from '../engine/Stage';
 import ScriptsPane from './ScriptsPane';
 import Undo from './Undo';
 import Library from './Library';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
-import MediaLib from '../../iPad/MediaLib';
+import OS from '../../tablet/OS';
+import IO from '../../tablet/IO';
+import MediaLib from '../../tablet/MediaLib';
 import Paint from '../../painteditor/Paint';
 import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
@@ -371,14 +371,14 @@ export default class UI {
 
 
     // TODO: handle errors
-    iOS.setmedianame(contents, file_name, 'svg',() =>  {
+    OS.setmedianame(contents, file_name, 'svg',() =>  {
 
         console.log(`Custom asset ${file_name} was cucessfully saved to the internal filesystem`);
 
         // TODO: check asset not exist
 
 
-       file_name = iOS.storagePath + file_name; 
+       file_name = OS.storagePath + file_name; 
 
         var table = (asset_type == "sprite")?"customsprites":"custombkgs";
 
@@ -390,7 +390,7 @@ export default class UI {
             ') values (' + values + ')';
 
         // TODO: handle errors
-        iOS.stmt(json, () => {
+        OS.stmt(json, () => {
 
             console.log(`Custom asset ${file_name}   appropriate record  was cucessfully saved to the internal db`);
 
@@ -611,7 +611,7 @@ if (isAndroid){
 
 
     var contents = data.replace("data:application/octet-stream;base64,", "");
-    iOS.loadProjectFromSjr(contents);
+    OS.loadProjectFromSjr(contents);
 
   }
 
@@ -629,7 +629,7 @@ if (isAndroid){
             contents = e.target.result.replace("data:;base64,", "");
         }
 
-        iOS.loadProjectFromSjr(contents);
+        OS.loadProjectFromSjr(contents);
      };
      reader.readAsDataURL(file);
   }
@@ -806,7 +806,7 @@ if (isAndroid){
            var reader = new FileReader();
            reader.onload = function(e){
               var contents = e.target.result.replace("data:application/octet-stream;base64,", "");
-              iOS.loadProjectFromSjr(contents);
+              OS.loadProjectFromSjr(contents);
            };
            reader.readAsDataURL(file);
         } */
@@ -912,7 +912,7 @@ if (isAndroid){
                 };
             }
 
-            iOS.deviceName(function (name) {
+            OS.deviceName(function (name) {
                 gn('deviceName').textContent = name;
             });
 
@@ -1033,7 +1033,7 @@ if (isAndroid){
 
         setTimeout(saveAndShare, 500); // 500ms delay to wait for loading GIF to show and keyboard to hide
 
-        iOS.analyticsEvent('editor', 'share_button', (shareType == 0) ? 'email' : 'airdrop');
+        OS.analyticsEvent('editor', 'share_button', (shareType == 0) ? 'email' : 'airdrop');
 
         function saveAndShare () {
             // Save the project's new name
@@ -1052,7 +1052,7 @@ if (isAndroid){
                     var emailSubject = Localization.localize('SHARING_EMAIL_SUBJECT', {
                         PROJECT_NAME: IO.shareName
                     });
-                    iOS.sendSjrToShareDialog(IO.zipFileName, emailSubject, Localization.localize('SHARING_EMAIL_TEXT'),
+                    OS.sendSjrToShareDialog(IO.zipFileName, emailSubject, Localization.localize('SHARING_EMAIL_TEXT'),
                         shareType, contents);
 
                     shareLoadingGif.style.visibility = 'hidden';
@@ -1108,7 +1108,7 @@ if (isAndroid){
     static handleTextFieldSave (dontHide) {
         // Handle story-starter mode project
         if (ScratchJr.isEditable() && ScratchJr.editmode == 'storyStarter' && !Project.error) {
-            iOS.analyticsEvent('samples', 'story_starter_edited', Project.metadata.name);
+            OS.analyticsEvent('samples', 'story_starter_edited', Project.metadata.name);
             // Get the new project name
             var sampleName = Localization.localize('SAMPLE_' + Project.metadata.name);
             IO.uniqueProjectName({
@@ -1142,7 +1142,7 @@ if (isAndroid){
         }
         Project.metadata.name = pname;
         ScratchJr.changed = true;
-        iOS.setfield(iOS.database, Project.metadata.id, 'name', pname);
+        OS.setfield(OS.database, Project.metadata.id, 'name', pname);
         if (!dontHide) {
             ScratchAudio.sndFX('exittap.wav');
             gn('infobox').className = 'infobox fade';

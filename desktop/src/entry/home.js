@@ -1,6 +1,6 @@
 import {gn} from '../utils/lib';
 import Localization from '../utils/Localization';
-import iOS from '../iPad/iOS';
+import OS from '../tablet/OS';
 import Lobby from '../lobby/Lobby';
 import WhatsNew from '../lobby/WhatsNew';
 
@@ -8,11 +8,11 @@ export function homeMain () {
     gn('logotab').ontouchend = homeGoBack;
     homeStrings();
     WhatsNew.init();
-    iOS.getsettings(doNext);
+    OS.getsettings(doNext);
     function doNext (str) {
         var list = str.split(',');
         // iOS.path = list[1] == '0' ? list[0] + '/' : undefined;
-        iOS.path = list[1] == '0' ? list[0] + '/' :  '';
+        OS.path = list[1] == '0' ? list[0] + '/' :  '';
         Lobby.appinit(window.Settings.scratchJrVersion);
     }
 }

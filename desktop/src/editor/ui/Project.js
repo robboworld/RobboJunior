@@ -5,8 +5,8 @@ import Palette from './Palette';
 import UI from './UI';
 import Page from '../engine/Page';
 import Sprite from '../engine/Sprite';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
+import OS from '../../tablet/OS';
+import IO from '../../tablet/IO';
 import Paint from '../../painteditor/Paint';
 import SVG2Canvas from '../../utils/SVG2Canvas';
 import {frame, gn, newHTML, scaleMultiplier, getIdFor,
@@ -420,7 +420,7 @@ export default class Project {
         json.cond = 'deleted = ? AND id != ? AND gallery IS NULL';
         json.items = ['name', 'thumbnail', 'id'];
         json.values = ['NO', projectID];
-        IO.query(iOS.database, json, function (result) {
+        IO.query(OS.database, json, function (result) {
             var pdata = JSON.parse(result);
             var isUnique = true;
             for (var p = 0; p < pdata.length; p++) {
@@ -459,14 +459,14 @@ export default class Project {
         Project.getThumbnailPNG(ScratchJr.stage.pages[0], 192, 144, getMD5);
         function getMD5 (dataurl) {
             var pngBase64 = dataurl.split(',')[1];
-            iOS.getmd5(pngBase64, function (str) {
+            OS.getmd5(pngBase64, function (str) {
                 savePNG(str, pngBase64);
             });
         }
 
         function savePNG (md5, pngBase64) {
             var filename = ScratchJr.currentProject + '_' + md5;
-            iOS.setmedianame(pngBase64, filename, 'png', doNext);
+            OS.setmedianame(pngBase64, filename, 'png', doNext);
         }
 
         function doNext (md5) {

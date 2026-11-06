@@ -4,7 +4,7 @@
 
 import {libInit, getUrlVars, gn, isAndroid, newHTML,newImage_extended} from '../utils/lib';
 import ScratchAudio from '../utils/ScratchAudio';
-import iOS from '../iPad/iOS';
+import OS from '../tablet/OS';
 import Localization from '../utils/Localization';
 import Cookie from '../utils/Cookie';
 
@@ -144,7 +144,7 @@ export default class Lobby {
             var doNext = function (page) {
                 Lobby.changePage(page);
             };
-            iOS.setfile('homescroll.sjr', gn('wrapc').scrollTop, function () {
+            OS.setfile('homescroll.sjr', gn('wrapc').scrollTop, function () {
                 doNext(page);
             });
         } else {
@@ -334,7 +334,7 @@ export default class Lobby {
           var free_space_bar_text = newHTML('div', 'free_space_bar_text', free_space_bar);
           free_space_bar_text.setAttribute('id', 'free_space_bar_text');
 
-          iOS.getStorageSpaceInfo((spaceResultObject) => {
+          OS.getStorageSpaceInfo((spaceResultObject) => {
 
             console.log(`bytesInUse: ${spaceResultObject.bytesInUse} grantedBytes: ${spaceResultObject.grantedBytes}`);
 
@@ -443,14 +443,14 @@ export default class Lobby {
                 ScratchAudio.sndFX('tap.wav');
                 let newLocale = window.Settings.supportedLocales[e.target.textContent];
                 Cookie.set('localization', newLocale);
-                iOS.analyticsEvent('lobby', 'language_changed', newLocale);
+                OS.analyticsEvent('lobby', 'language_changed', newLocale);
                 window.location = '?place=gear';
             };
             languageButton.onmousedown = languageButton.ontouchstart;
         }
 
         var storagePath = newHTML('div', 'storage-path', p);
-        var sp = iOS.getStoragePath;
+        var sp = OS.getStoragePath;
         storagePath.textContent = Localization.localize('STORAGE_PATH') + ' ' + sp;
     }
 

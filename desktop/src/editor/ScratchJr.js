@@ -6,8 +6,8 @@ import Undo from './ui/Undo';
 import Alert from './ui/Alert';
 import Palette from './ui/Palette';
 import Record from './ui/Record';
-import IO from '../iPad/IO';
-import iOS from '../iPad/iOS';
+import IO from '../tablet/IO';
+import OS from '../tablet/OS';
 import UI from './ui/UI';
 import Menu from './blocks/Menu';
 import Library from './ui/Library';
@@ -183,7 +183,7 @@ export default class ScratchJr {
         document.body.scrollTop = 0;
         time = (new Date()) - 0;
         var urlvars = getUrlVars();
-        iOS.hascamera();
+        OS.hascamera();
         ScratchJr.log('starting the app');
         BlockSpecs.initBlocks();
         Project.loadIcon = document.createElement('img');
@@ -351,7 +351,7 @@ export default class ScratchJr {
 
     static saveProject (e, onDone) {
         if (ScratchJr.isEditable() && editmode == 'storyStarter' && storyStarted && !Project.error) {
-            iOS.analyticsEvent('samples', 'story_starter_edited', Project.metadata.name);
+            OS.analyticsEvent('samples', 'story_starter_edited', Project.metadata.name);
             // Localize sample project names
             var sampleName = Localization.localize('SAMPLE_' + Project.metadata.name);
             // Get the new project name
@@ -391,9 +391,9 @@ export default class ScratchJr {
 
     static flippage () {
         Alert.close();
-        iOS.cleanassets('wav', doNext);
+        OS.cleanassets('wav', doNext);
         function doNext () {
-            iOS.cleanassets('svg', ScratchJr.switchPage);
+            OS.cleanassets('svg', ScratchJr.switchPage);
         }
     }
 
@@ -530,7 +530,7 @@ export default class ScratchJr {
         ScratchJr.displayStatus('none');
         inFullscreen = true;
         UI.enterFullScreen();
-        iOS.analyticsEvent('editor', 'full_screen_entered');
+        OS.analyticsEvent('editor', 'full_screen_entered');
         document.body.style.background = 'black';
     }
 
@@ -957,7 +957,7 @@ export default class ScratchJr {
     }
 
     static stopServer () {
-        iOS.stopserver(iOS.trace);
+        OS.stopserver(OS.trace);
     }
 
     /**

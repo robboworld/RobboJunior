@@ -3,9 +3,9 @@ import BlockSpecs from '../editor/blocks/BlockSpecs';
 import SVGTools from './SVGTools';
 import SVG2Canvas from '../utils/SVG2Canvas';
 import Ghost from './Ghost';
-import iOS from '../iPad/iOS';
-import IO from '../iPad/IO';
-import MediaLib from '../iPad/MediaLib';
+import OS from '../tablet/OS';
+import IO from '../tablet/IO';
+import MediaLib from '../tablet/MediaLib';
 import Localization from '../utils/Localization';
 import Alert from '../editor/ui/Alert';
 import PaintAction from './PaintAction';
@@ -170,7 +170,7 @@ export default class Paint {
     }
 
     static open (bkg, md5, sname, cname, cscale, sw, sh,need_flip) {
-        iOS.analyticsEvent('editor', 'paint_editor_opened', bkg ? 'bkg' : 'character');
+        OS.analyticsEvent('editor', 'paint_editor_opened', bkg ? 'bkg' : 'character');
         PaintUndo.buffer = [];
         PaintUndo.index = 0;
         maxZoom = 5;
@@ -871,7 +871,7 @@ export default class Paint {
         Paint.addSidePalette(rightpal, 'selectortools', ['select', 'rotate']);
         Paint.addSidePalette(rightpal, 'edittools', ['stamper', 'scissors']);
         Paint.addSidePalette(rightpal, 'filltools',
-            (iOS.camera == '1' && Camera.available) ? ['camera', 'paintbucket'] : ['paintbucket']);
+            (OS.camera == '1' && Camera.available) ? ['camera', 'paintbucket'] : ['paintbucket']);
     }
 
     static addSidePalette (p, id, list) {
@@ -1212,7 +1212,7 @@ export default class Paint {
             Paint.loadChar(md5);
         } else if (!MediaLib.keys[md5]) {
             // Load user asset
-            iOS.getmedia(md5, nextStep);
+            OS.getmedia(md5, nextStep);
         } else {
             // Load library asset
             Paint.getBkg(MediaLib.path + md5);
@@ -1305,7 +1305,7 @@ export default class Paint {
               md5 = md5.replace("_custom","");
 
             }
-            iOS.getmedia(md5, nextStep);
+            OS.getmedia(md5, nextStep);
         } else {
             // Load library asset
             Paint.loadChar(MediaLib.path + md5);
@@ -1397,14 +1397,14 @@ export default class Paint {
     static addToBkgLib (fcn) {
         var dataurl = IO.getThumbnail(svgdata, 480, 360, 120, 90);
         var pngBase64 = dataurl.split(',')[1];
-        iOS.setmedia(pngBase64, 'png', setBkgRecord);
+        OS.setmedia(pngBase64, 'png', setBkgRecord);
         function setBkgRecord (pngmd5) {
             var json = {};
             var keylist = ['md5', 'altmd5', 'version', 'width', 'height', 'ext'];
             var values = '?,?,?,?,?,?';
             json.values = [saveMD5, pngmd5, ScratchJr.version, '480', '360', 'svg'];
             json.stmt = 'insert into userbkgs (' + keylist.toString() + ') values (' + values + ')';
-            iOS.stmt(json, fcn);
+            OS.stmt(json, fcn);
         }
     }
 
@@ -1485,14 +1485,14 @@ export default class Paint {
         var h = box.height.toString();
         var dataurl = IO.getThumbnail(svgdata, w, h, 120, 90);
         var pngBase64 = dataurl.split(',')[1];
-        iOS.setmedia(pngBase64, 'png', setCostumeRecord);
+        OS.setmedia(pngBase64, 'png', setCostumeRecord);
         function setCostumeRecord (pngmd5) {
             var json = {};
             var keylist = ['scale', 'md5', 'altmd5', 'version', 'width', 'height', 'ext', 'name','need_flip'];
             var values = '?,?,?,?,?,?,?,?,?';
             json.values = [scale, saveMD5, pngmd5, ScratchJr.version, w, h, 'svg', cname,Paint.need_flip];
             json.stmt = 'insert into usershapes (' + keylist.toString() + ') values (' + values + ')';
-            iOS.stmt(json, fcn);
+            OS.stmt(json, fcn);
         }
     }
 
@@ -1603,7 +1603,7 @@ export default class Paint {
         } // make sure there are unique mask names
         Paint.scaleToFit();
         minZoom = currentZoom < 1 ? currentZoom / 2 : 1;
-        var maxpix = 2290 * 2289; // Magic iOS max canvas size
+        var maxpix = 2290 * 2289; // Magic OS max canvas size
         var ratio = maxpix / (workspaceWidth * workspaceHeight);
         var zoom = Math.floor(Math.sqrt(ratio));
         if (zoom < maxZoom) {
