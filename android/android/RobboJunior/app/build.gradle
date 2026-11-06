@@ -21,8 +21,8 @@ android {
             applicationId "org.robbojunior.androidfree"
             minSdkVersion 19 //17
             targetSdkVersion 25 //25
-            versionCode 003
-            versionName "0.0.3"
+            versionCode 1000049
+            versionName "1.0.0-alpha"
         }
     }
 }

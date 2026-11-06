@@ -46,6 +46,10 @@ TARGETS=(
     "packaging/linux/rpm_package/robboJunior.spec|^%define version .*\$|%define version $RPM_VERSION"
     "packaging/linux/rpm_package/robboJunior.spec|^%define release .*\$|%define release $RPM_RELEASE"
     "packaging/windows/RobboJunior.nsi|^!define VERSION .*\$|!define VERSION \"$VERSION\""
+    "android/version|^Version: .*\$|Version: robbojunior (android) $VERSION"
+    "android/package.json|^  \"version\": \".*\",\$|  \"version\": \"$VERSION\","
+    "android/android/RobboJunior/app/build.gradle|^( *)versionCode .*\$|\\1versionCode $ANDROID_VERSION_CODE"
+    "android/android/RobboJunior/app/build.gradle|^( *)versionName .*\$|\\1versionName \"$VERSION\""
 )
 
 mismatch=0
