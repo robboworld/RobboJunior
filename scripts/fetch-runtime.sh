@@ -16,11 +16,12 @@ ELECTRON_SHA256_linux="c40cc41da8f7958b4edbef953e9b0b4e830689467d1f1993c4d298677
 ELECTRON_SHA256_windows="40f89fd5bd3aa59911e80c10d580cd7133d81693c702a933dd0f4c78e064566c"
 
 # Java 8 обязательна: панель (Spring 4.1, Jersey 1.5) использует JAXB, которого нет в Java 11+
-JRE_TAG="jdk8u512-b09"
-JRE_FILE_linux="OpenJDK8U-jre_x64_linux_hotspot_8u512b09.tar.gz"
-JRE_SHA256_linux="57468dc8bfd71dd0578d9717e63a8c13b9efe0a2f2c85c2a13966d1c0f9b1e5f"
-JRE_FILE_windows="OpenJDK8U-jre_x64_windows_hotspot_8u512b09.zip"
-JRE_SHA256_windows="ae1ae12f817d7735477c6555107eece73854da0654da69077309ef9bff0b78bf"
+# Выше 8u402 не поднимать: с 8u412 на Ubuntu 22.04 (GNOME) панель падает при старте в java.awt.TrayIcon
+JRE_TAG="jdk8u402-b06"
+JRE_FILE_linux="OpenJDK8U-jre_x64_linux_hotspot_8u402b06.tar.gz"
+JRE_SHA256_linux="1d8c109e96bdb35ffff667dfb911ce03fb9f0f924048dcc8fdbd45198b263ecd"
+JRE_FILE_windows="OpenJDK8U-jre_x64_windows_hotspot_8u402b06.zip"
+JRE_SHA256_windows="618c71eb71e1850f3e606d85186da4d81f898bd62d8478bd5a5415b28e23fb25"
 
 # Маркер: по нему build_* проверяют, что runtime нужной версии
 RUNTIME_MARKER="electron=$ELECTRON_VERSION jre=$JRE_TAG"
