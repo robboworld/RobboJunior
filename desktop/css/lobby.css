@@ -735,3 +735,21 @@ h1.upload-image-title {
 
 
 }
+
+div.storage-path {
+    
+    /* width: ${css_vw(27)}; */
+    height: 47pt;
+    float: left;
+    position: relative; /* for absolute positioning of pseudo :after element */
+    
+    /* color: #fff; */
+    /* font-size: ${css_vh(4.5)}; */
+    /* fontsize based on device vertical height doesn't work on 16:9 aspect Android device, just set fixed size font */
+    font-size: 34.5px;
+    text-align: center;
+    margin-left: ${css_vw(25)};
+    margin-bottom: ${css_vw(2)};
+    padding-top: 2%;
+    
+}

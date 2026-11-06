@@ -440,7 +440,17 @@
 
 {"md5":"Robbo ABC 32.svg","width":100,"height":200,"ext":"svg","name":"Robbo ABC 32","order":"characters,13 ABC","tags":["characters","13 ABC"]},
 
-{"md5":"Robbo ABC 33.svg","width":100,"height":200,"ext":"svg","name":"Robbo ABC 33","order":"characters,13 ABC","tags":["characters","13 ABC"]}
+{"md5":"Robbo ABC 33.svg","width":100,"height":200,"ext":"svg","name":"Robbo ABC 33","order":"characters,13 ABC","tags":["characters","13 ABC"]},
+
+
+
+{"md5":"ROBBO_platforma.svg","width":596,"height":842,"ext":"svg","name":"Robbo platforma","order":"characters,15 ROBBO","tags":["characters","15 ROBBO"]},
+
+{"md5":"ROBBO.svg","width":612,"height":792,"ext":"svg","name":"ROBBO","order":"characters,15 ROBBO","tags":["characters","15 ROBBO"]},
+
+{"md5":"ROBBO_farmer.svg","width":612,"height":792,"ext":"svg","name":"ROBBO farmer","need_flip":"true", "order":"characters,15 ROBBO","tags":["characters","15 ROBBO"]},
+
+{"md5":"ROBBO_flying.svg","width":612,"height":792,"ext":"svg","name":"ROBBO flying", "need_flip":"true", "order":"characters,15 ROBBO","tags":["characters","15 ROBBO"]}
 
 
 
