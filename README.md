@@ -11,7 +11,7 @@
 | `desktop/` | да | Приложение для компьютера (Electron 17): `src/` — исходники, остальное — ресурсы GUI |
 | `android/` | да | Приложение для Android (отдельная кодовая база 2017 года, Android Studio) |
 | `packaging/common/panel/` | да | Java-панель управления роботом: jar'ы, `config.ini`, `i18n.*`, прошивки |
-| `packaging/common/drivers/` | да | Драйверы Windows (FTDI, Arduino, CH340) — копия из RS3_Assembly |
+| `packaging/common/drivers/` | да | Драйверы Windows (FTDI, Arduino; CH340SER.EXE в установщик не входит) — копия из RS3_Assembly |
 | `packaging/common/icons/` | да | Иконки |
 | `packaging/linux/` | да | `build_deb.sh`, `build_rpm.sh`, шаблоны пакетов, общие файлы (`files/`) |
 | `packaging/windows/` | да | `build_windows.sh`, `RobboJunior.nsi` |
