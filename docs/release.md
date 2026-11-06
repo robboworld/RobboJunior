@@ -16,7 +16,7 @@
 | Альт, РЕД ОС, Fedora | `packaging/linux/output/robboJunior-<версия>-<релиз>.x86_64.rpm` |
 | Windows 10/11 x64 | `packaging/windows/output/robboJunior-<версия>-x64.exe` |
 
-Выкладки на сервер и автообновления пока нет.
+Выкладка на зеркала: `scripts/deploy.sh [--target ru|world|all] [--dry-run]`, настройки в `config/deploy*.conf` (шаблоны `*.conf.example`, пароли вне git). Пакеты и `CHANGELOG.md` идут в `Software/RobboJunior/alpha/`, последним загружается `latest.json` (и его копия `latest.txt`). По нему программа предлагает обновиться (`desktop/update-check.js`): один раз на версию, загрузка установщика в браузере.
 
 ## Что проверить перед выпуском
 
