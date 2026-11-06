@@ -6,6 +6,8 @@ import Alert from '../ui/Alert';
 import Localization from '../../utils/Localization';
 import {gn,isTablet} from '../../utils/lib';
 
+const ROBOT_RETRY_MS = 3000;
+
 
 export default class Runtime {
     constructor () {
@@ -41,7 +43,10 @@ export default class Runtime {
     }
 
    get_robot_version_and_tickTask(rt){
-     if ((rt.robot_version == undefined) && (!isTablet) && (!rt.start_robot_version_checking_process)){
+     // The panel answers with an error while it scans the ports or another program holds the port,
+     // so a robot that was not found is asked for again: the status turns green by itself.
+     let retry = (rt.robot_version == -1) && (Date.now() - rt.robot_checked_at > ROBOT_RETRY_MS);
+     if (((rt.robot_version == undefined) || retry) && (!isTablet) && (!rt.start_robot_version_checking_process)){
         rt.detect_robot_version();
      }
      rt.tickTask();
@@ -56,10 +61,12 @@ export default class Runtime {
      // A script started meanwhile begins a new detection: answers to the old one are ignored.
      rt.robot_detection = detection;
      rt.start_robot_version_checking_process = true;
+     rt.robot_checked_at = Date.now();
 
      function finish_detection(robot_version){
         rt.robot_version = robot_version;
         rt.start_robot_version_checking_process = false;
+        rt.robot_checked_at = Date.now();
         gn("robot_connection_status").style.backgroundColor = (robot_version == -1) ? "red" : "green";
         console.log("[src::editor::engine::Runtime.js::rt.robot_version: ] " + rt.robot_version);
      }
