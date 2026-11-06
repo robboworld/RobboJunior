@@ -3,6 +3,8 @@ const electron = require('electron')
 const app = electron.app
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
+// Module to control the application menu.
+const Menu = electron.Menu
 
 const path = require('path')
 const url = require('url')
@@ -12,6 +14,9 @@ const url = require('url')
 let mainWindow
 
 function createWindow () {
+  // No menu bar: the default one offers reload and DevTools to children.
+  Menu.setApplicationMenu(null)
+
   // Create the browser window.
   mainWindow = new BrowserWindow(
   {
