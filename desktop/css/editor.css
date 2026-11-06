@@ -288,7 +288,7 @@ z-index: 10;
     position: relative;
     margin: ${css_vh(0)} ${css_vh(0)} ${css_vh(0)};
     height: ${64 * scaleMultiplier}px; /* 64*/
-    width: ${659 * scaleMultiplier}px; /*659*/
+    width: calc(100% - ${418 * scaleMultiplier}px); /* the rest of the row after .categoryselector */
     z-index:4;
     overflow-x: visible;
     overflow-y: hidden;
