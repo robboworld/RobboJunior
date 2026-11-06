@@ -1,0 +1,6 @@
+{
+  "name": "RobboJunior",
+  "version": "0.0.0-test",
+  "description": "Runs the real desktop/main.js from a test main process, see tests/README.md",
+  "main": "main.js"
+}

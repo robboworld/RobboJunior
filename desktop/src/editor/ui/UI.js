@@ -672,7 +672,6 @@ if (isAndroid){
 
                     }
 
-                      shareLoadingGif.style.visibility = 'hidden';
                   });
               });
           }
