@@ -76,7 +76,7 @@ CONTENTS=$(dpkg-deb -c "$OUT_FILE")
 for f in "opt/robboJunior/jr/junior" "opt/robboJunior/jr/resources/app/app.bundle.js" \
     "opt/robboJunior/java/bin/java" "opt/robboJunior/lib/i-robot.jar" "opt/robboJunior/robboJunior" \
     "usr/bin/robboJunior" "usr/share/applications/robboJunior.desktop"; do
-    echo "$CONTENTS" | grep -q " \./$f\$" || die "в пакете нет $f"
+    grep -q " \./$f\$" <<<"$CONTENTS" || die "в пакете нет $f"
 done
 require_min_size "$OUT_FILE" 50000000
 
