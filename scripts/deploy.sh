@@ -144,7 +144,7 @@ deploy_target() {
     for f in "${FILES[@]}"; do
         name=$(basename "$f")
         size=$(wc -c <"$f")
-        got=$(curl -sSI -m 30 "$url$(remote_dir "$f")$(urlencode "$name")" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
+        got=$(curl -sSIL -m 30 "$url$(remote_dir "$f")$(urlencode "$name")" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
         [ "$got" = "$size" ] || die "$target: $name на сервере ${got:-нет ответа}, локально $size байт"
         echo "  проверено: $url$(remote_dir "$f")$(urlencode "$name")"
     done
@@ -158,7 +158,7 @@ deploy_target() {
     } >"$script"
     run_lftp
     size=$(wc -c <"$LATEST_DIR/latest.txt")
-    got=$(curl -sSI -m 30 "$url${LATEST_REMOTE}latest.txt" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
+    got=$(curl -sSIL -m 30 "$url${LATEST_REMOTE}latest.txt" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
     [ "$got" = "$size" ] || die "$target: latest.txt на сервере ${got:-нет ответа}, локально $size байт"
     echo "  проверено: $url${LATEST_REMOTE}latest.txt"
 }
