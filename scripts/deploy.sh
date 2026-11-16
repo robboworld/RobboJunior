@@ -1,13 +1,15 @@
 #!/bin/bash
 # Выкладка готовых пакетов Robbo Junior на зеркала. Канал — по версии: X.Y.Z-alpha, -beta, -rc.1 идут
-# в alpha/, X.Y.Z и X.Y.Z-N в release/.
+# в alpha/, X.Y.Z и X.Y.Z-N в release/. Раскладка та же, что у Robbo Scratch:
+#   alpha/{CHANGELOG.md,latest.json,latest.txt}  alpha/Linux/ (.deb, .rpm)  alpha/Windows/ (.exe)
+#   {CHANGELOG.md,latest.json,latest.txt}        release/Linux/            release/Windows/
 #
 #   scripts/deploy.sh [--target ru|world|all] [--dry-run]
 #
 # Настройки: config/deploy.conf (ru) и config/deploy.world.conf (world), шаблоны — *.conf.example.
-# Пакеты собирает scripts/release.sh. Текущая версия на сервере не трогается.
+# Пакеты собирает scripts/release.sh. Прежние файлы на сервере скрипт не трогает: в release/ должна лежать
+# только текущая версия, прошлую перед выкладкой перенесите в old_releases/ (он есть только на files.robbo.ru).
 # Последним загружается latest.json канала: по нему программа предлагает обновиться.
-# release: RobboJunior/latest.json, пакеты в release/; alpha: всё в alpha/.
 
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -33,9 +35,18 @@ require_cmd lftp curl python3
 
 VERSION=$(rj_version)
 case "$(rj_version_suffix "$VERSION")" in
-    "" | [0-9]*) CHANNEL=release; PACKAGES_DIR=release; LATEST_REMOTE="" ;;
-    *) CHANNEL=alpha; PACKAGES_DIR=alpha; LATEST_REMOTE=alpha/ ;;
+    "" | [0-9]*) CHANNEL=release; PACKAGES_DIR=release/; LATEST_REMOTE="" ;;
+    *) CHANNEL=alpha; PACKAGES_DIR=alpha/; LATEST_REMOTE=alpha/ ;;
 esac
+
+# Каталог файла на зеркале относительно RobboJunior/
+remote_dir() {
+    case "$1" in
+        *.deb | *.rpm) echo "${PACKAGES_DIR}Linux/" ;;
+        *.exe) echo "${PACKAGES_DIR}Windows/" ;;
+        *) echo "$LATEST_REMOTE" ;;
+    esac
+}
 FILES=(
     "$RJ_PACKAGING/linux/output/${RJ_PACKAGE_NAME}_$(rj_deb_version "$VERSION")_amd64.deb"
     "$RJ_PACKAGING/linux/output/$RJ_PACKAGE_NAME-$(rj_rpm_version "$VERSION")-$(rj_rpm_release "$VERSION").x86_64.rpm"
@@ -72,9 +83,9 @@ deploy_target() {
             url="http://files.robbo.world/Software/RobboJunior/"
             ;;
     esac
-    info "$target: $remote$PACKAGES_DIR ($CHANNEL)"
+    info "$target: $remote ($CHANNEL)"
     for f in "${FILES[@]}"; do
-        echo "  $(basename "$f")  $(du -h "$f" | cut -f1)"
+        echo "  $(remote_dir "$f")$(basename "$f")  $(du -h "$f" | cut -f1)"
     done
     echo "  ${LATEST_REMOTE}latest.json, ${LATEST_REMOTE}latest.txt"
     [ "$DRY_RUN" -eq 0 ] || return 0
@@ -120,10 +131,9 @@ deploy_target() {
     script=$(mktemp -p "$LATEST_DIR")  # там же временный файл с паролем: удалится при любом выходе
     {
         connect_commands
-        echo "mkdir -p -f $remote$PACKAGES_DIR"
-        echo "cd $remote$PACKAGES_DIR"
         for f in "${FILES[@]}"; do
-            echo "put -e \"$f\" -o \"$(basename "$f")\""
+            echo "mkdir -p -f $remote$(remote_dir "$f")"
+            echo "put -e \"$f\" -o \"$remote$(remote_dir "$f")$(basename "$f")\""
         done
     } >"$script"
 
@@ -134,9 +144,9 @@ deploy_target() {
     for f in "${FILES[@]}"; do
         name=$(basename "$f")
         size=$(wc -c <"$f")
-        got=$(curl -sSI -m 30 "$url$PACKAGES_DIR/$(urlencode "$name")" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
+        got=$(curl -sSI -m 30 "$url$(remote_dir "$f")$(urlencode "$name")" | tr -d '\r' | awk 'tolower($1)=="content-length:"{print $2}' | tail -1)
         [ "$got" = "$size" ] || die "$target: $name на сервере ${got:-нет ответа}, локально $size байт"
-        echo "  проверено: $url$PACKAGES_DIR/$(urlencode "$name")"
+        echo "  проверено: $url$(remote_dir "$f")$(urlencode "$name")"
     done
 
     # После сверки: программа не должна предлагать версию, пока пакеты не на месте

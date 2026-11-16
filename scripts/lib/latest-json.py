@@ -2,8 +2,8 @@
 """latest.json: what the app reads to offer a new version (desktop/update-check.js).
 
 Written next to the packages and uploaded after them, so the app never offers a file that is not there
-yet. Downloads are relative to latest.json: RobboJunior/latest.json points into release/, alpha/latest.json
-lies next to its packages. The format is the one Robbo Scratch reads, without per-OS
+yet. Downloads are relative to latest.json, the layout of Robbo Scratch: RobboJunior/latest.json points into
+release/Linux/ and release/Windows/, alpha/latest.json into alpha/Linux/ and alpha/Windows/. The format is the one Robbo Scratch reads, without per-OS
 versions: every upload carries all the packages of one version. notes is the release message of the
 version (release-notes/), null when there is none.
 
@@ -30,7 +30,8 @@ def main():
         name = os.path.basename(package)
         kind = KINDS.get(os.path.splitext(name)[1])
         if kind:
-            downloads[kind] = ('release/' if channel == 'release' else '') + name
+            folder = 'Windows/' if kind == 'windows' else 'Linux/'
+            downloads[kind] = ('release/' if channel == 'release' else '') + folder + name
     if not downloads:
         sys.exit('latest-json: нет пакетов')
 

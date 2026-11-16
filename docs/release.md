@@ -17,7 +17,7 @@
 | Альт, РЕД ОС, Fedora | `packaging/linux/output/robboJunior-<версия>-<релиз>.x86_64.rpm` |
 | Windows 10/11 x64 | `packaging/windows/output/robboJunior-<версия>-x64.exe` |
 
-Выкладка на зеркала: `scripts/deploy.sh [--target ru|world|all] [--dry-run]`, настройки в `config/deploy*.conf` (шаблоны `*.conf.example`, пароли вне git). Канал определяется по версии: `X.Y.Z-alpha` идёт в `Software/RobboJunior/alpha/`, `X.Y.Z` и `X.Y.Z-N` в `release/`. Последним загружается `latest.json` канала и его копия `latest.txt`: для release в `Software/RobboJunior/`, для alpha в `alpha/`. По нему программа предлагает обновиться (`desktop/update-check.js`): один раз на версию, загрузка установщика в браузере.
+Выкладка на зеркала: `scripts/deploy.sh [--target ru|world|all] [--dry-run]`, настройки в `config/deploy*.conf` (шаблоны `*.conf.example`, пароли вне git). Канал определяется по версии: `X.Y.Z-alpha` идёт в `Software/RobboJunior/alpha/`, `X.Y.Z` и `X.Y.Z-N` в `release/`. Раскладка как у Robbo Scratch: `.deb` и `.rpm` в `Linux/`, `.exe` в `Windows/` внутри канала; `CHANGELOG.md`, `latest.json` и его копия `latest.txt` (files.robbo.world не отдаёт `.json`) — в `alpha/` или в корне продукта для release. `latest.json` загружается последним. В `release/` лежит только текущая версия: прошлую перед выкладкой перенесите в `old_releases/` (есть только на files.robbo.ru), скрипт её не трогает. По нему программа предлагает обновиться (`desktop/update-check.js`): один раз на версию, загрузка установщика в браузере.
 
 ## Что проверить перед выпуском
 
