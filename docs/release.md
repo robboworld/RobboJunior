@@ -16,7 +16,11 @@
 | Альт, РЕД ОС, Fedora | `packaging/linux/output/robboJunior-<версия>-<релиз>.x86_64.rpm` |
 | Windows 10/11 x64 | `packaging/windows/output/robboJunior-<версия>-x64.exe` |
 
-Выкладки на сервер и автообновления пока нет.
+Выкладка на зеркала: `scripts/deploy.sh [--target ru|world|all] [--dry-run]`, настройки в `config/deploy.conf` (files.robbo.ru, SFTP) и `config/deploy.world.conf` (files.robbo.world, FTP), шаблоны — `*.conf.example`, пароли в git не кладём.
+
+Канал определяется по версии: `X.Y.Z-alpha`, `X.Y.Z-alpha.2` идут в `Software/RobboJunior/alpha/`, `X.Y.Z` и `X.Y.Z-N` в `release/`. Раскладка как у Robbo Scratch: `.deb` и `.rpm` в `Linux/`, `.exe` в `Windows/` внутри канала; `CHANGELOG.md`, `latest.json` и его копия `latest.txt` (files.robbo.world не отдаёт `.json`) — в `alpha/` или в корне продукта для release. `latest.json` загружается последним, после сверки размеров пакетов по HTTP. В `release/` лежит только текущая версия: прошлую перед выкладкой перенесите в `old_releases/` (есть только на files.robbo.ru), скрипт её не трогает.
+
+Версии 1.0.0-alpha не проверяют обновления: `latest.json` для них не нужен, но и не мешает.
 
 ## Что проверить перед выпуском
 
