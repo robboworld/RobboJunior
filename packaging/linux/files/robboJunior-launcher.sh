@@ -25,5 +25,16 @@ mkdir -p "$LOG_DIR"
 
 # Панель запускает GUI по относительному пути ./jr/junior — рабочий каталог обязателен
 cd "$INSTALL_DIR" || exit 1
+
+# Журнал: panel.log (предыдущий запуск — panel.old.log). Окно Junior пишет рядом свой журнал
+# в ~/.config/RobboJunior/logs/main.log. Заголовок нужен, чтобы по одному файлу было видно окружение.
+[ -f "$LOG_DIR/panel.log" ] && mv -f "$LOG_DIR/panel.log" "$LOG_DIR/panel.old.log"
+{
+    echo "$(date '+%F %T') start robboJunior"
+    uname -a
+    echo "DISPLAY=${DISPLAY:-} WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-} XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-} LANG=${LANG:-}"
+    "$INSTALL_DIR/java/bin/java" -version 2>&1
+} >"$LOG_DIR/panel.log" 2>&1
+
 exec "$INSTALL_DIR/java/bin/java" -Xmx256m -cp "$INSTALL_DIR/lib/*" scratchduino.robot.Main \
-    >"$LOG_DIR/panel.log" 2>&1
+    >>"$LOG_DIR/panel.log" 2>&1

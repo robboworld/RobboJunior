@@ -33,8 +33,9 @@ Unicode True
 !define REG_KEY "robboJunior"
 ; Ярлык запускает Java-панель; она сама открывает окно Junior (jr\junior.exe)
 ; относительно рабочего каталога — поэтому у ярлыка рабочий каталог $INSTDIR.
-!define PANEL_EXE "$INSTDIR\java\bin\javaw.exe"
-!define PANEL_ARGS '-Xmx256m -cp "lib\*" scratchduino.robot.Main'
+; Запуск идёт через robboJunior.vbs: скрытое окно и журнал %LOCALAPPDATA%\RobboJuniorLogs\panel.log
+!define PANEL_EXE "$WINDIR\System32\wscript.exe"
+!define PANEL_ARGS '"$INSTDIR\robboJunior.vbs"'
 
 Name "${PRODUCT_NAME}"
 OutFile "${OUT_FILE}"
@@ -143,6 +144,7 @@ Section "!${PRODUCT_NAME}" SecMain
   SetOutPath "$INSTDIR"
   File /r "${STAGE_DIR}\*.*"
   File "/oname=robbojunior.ico" "${ICON_FILE}"
+  File "robboJunior.vbs"
 
   ${IfNot} ${FileExists} "$INSTDIR\jr\junior.exe"
   ${OrIfNot} ${FileExists} "$INSTDIR\jr\resources\app\app.bundle.js"
@@ -229,6 +231,7 @@ Section "Uninstall"
   Delete "$INSTDIR\i18n.*"
   Delete "$INSTDIR\runtime-version.txt"
   Delete "$INSTDIR\robbojunior.ico"
+  Delete "$INSTDIR\robboJunior.vbs"
   Delete "$INSTDIR\robbojunior.lnk"
   Delete "$INSTDIR\uninstall.exe"
   RMDir "$INSTDIR"
